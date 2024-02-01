@@ -8,37 +8,27 @@
 #include <texture.h>
 #include <shader.h>
 #include <window.h>
-
 #include <maze.h>
-
-Camera camera;
+#include <gui.h>
 
 int main() {
     
     Camera camera;
-    Window window(1920, 1080, "Maze Game");
+    Window window(1920, 1080, "Maze Game", true);
     Shader shader("shaders/vertex_shader.glsl", "shaders/fragment_shader.glsl");
     Texture grass("textures/grass.bmp"); //std::cout << grass.getID() << std::endl;
     Texture stone("textures/stone.bmp"); //std::cout << stone.getID() << std::endl; 
     Mesh wall("meshes/cube.obj"); //std::cout << wall.getVAO() << std::endl;
     Mesh feild("meshes/feild.obj"); //std::cout << feild.getVAO() << std::endl;
-    Maze maze(31, 31);
-    float mazeExpandTimer = 0.0f;
+    Maze maze(31, 31, 0.0);
+    Gui gui(window, maze, shader.getID());
   
     while (window.isOpen()) {
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
-
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // Draw the maze walls
-        
-        mazeExpandTimer += window.getDeltaTime();
-        if (mazeExpandTimer > 0.1f) {
-            maze.expand();
-            mazeExpandTimer = 0.0f;
-            }
 
         auto corridors = maze.getCorridors();
         for (int i = 0; i < corridors.size(); ++i) {
@@ -53,6 +43,8 @@ int main() {
             }
 
         camera.draw(feild.getVAO(), feild.getEBO(), feild.getVertexCount(), 0,0,0, grass.getID(), shader.getID());
+
+        gui.draw();
 
         float forward = window.input(GLFW_KEY_W) ? 1.0f : (window.input(GLFW_KEY_S) ? -1.0f : 0.0f);
         float strafe = window.input(GLFW_KEY_D) ? 1.0f : (window.input(GLFW_KEY_A) ? -1.0f : 0.0f);

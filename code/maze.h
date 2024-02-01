@@ -10,8 +10,8 @@ class Maze {
     
     public:
         
-        Maze(int width, int height) : width(width), height(height) {
-            corridors.resize(height, std::vector<char>(width, '#'));
+        Maze(int width, int height, float expandSpeed) : width(width), height(height), expandTimer(0.0f), expandSpeed(expandSpeed) {
+            corridors.resize(width, std::vector<char>(height, '#'));
             }
 
         const std::vector<std::vector<char>>& getCorridors() const {
@@ -21,16 +21,25 @@ class Maze {
         int getWidth() const {
             return width;
             }
+        
+        float getExpandSpeed() const {
+            return expandSpeed;
+            }
+
+        void setExpandSpeed(float speed) {
+            expandSpeed = speed;
+            }
 
         int getHeight() const {
             return height;
             }
         
+        
         void expand() {
             
             if (cells_to_expand.empty()) { // Maze is complete or not started
-                if (corridors[getWidth() -2][getHeight() -2] == ' ') { return; } //Maze is complete
-                    cells_to_expand.push({getWidth() -2, getHeight() -2}); // Start
+                if (corridors[1][1] == ' ') { return; } //Maze is complete
+                    cells_to_expand.push({1, 1}); // Start
                 }
 
             struct Direction { int dx, dy; };
@@ -55,12 +64,23 @@ class Maze {
 
             }
 
-            
+    
+    
+    
+        void tick(float deltaTime) {
+            expandTimer += deltaTime;
+            if (expandTimer > expandSpeed) {
+                expand();
+                expandTimer = 0.0f;
+                }
+            }      
         
     private:
         
         int width;
         int height;
+        float expandTimer;
+        float expandSpeed;
         std::stack<std::pair<int, int>> cells_to_expand;
         std::vector<std::vector<char>> corridors;
     

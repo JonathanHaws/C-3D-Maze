@@ -41,8 +41,8 @@ class Camera {
             }
 
         void move(float run, float strafe, float turn, float deltaTime = 1) {
-            const float cameraSpeed = 5.0f * deltaTime;
-            const float turnSpeed = 2.5 * deltaTime;
+            const float cameraSpeed = 12.0f * deltaTime;
+            const float turnSpeed = 5.0f * deltaTime;
             
             // Calculate forward vector
             float forwardX = target.x - position.x;
