@@ -21,24 +21,7 @@ float cameraPitch = 0.0f;
     void window_size_callback(GLFWwindow* window, int width, int height) {
         glViewport(0, 0, width, height);
         }
-
-    bool escapeKeyPressed = false;
-    double mouseX = 0.0;
-    double mouseY = 0.0;
-    double prevMouseX = 0.0;
-    double prevMouseY = 0.0;
-    float xoffset = mouseX - prevMouseX;
-    float yoffset = mouseY - prevMouseY;
-    void updateMousePos(GLFWwindow* window, double xpos, double ypos) {
-        prevMouseX = mouseX;
-        prevMouseY = mouseY;
-        mouseX = xpos;
-        mouseY = ypos;
-        xoffset = mouseX - prevMouseX;
-        yoffset = mouseY - prevMouseY;
-        bool escapeKeyPressed = false;
-        
-        };
+      
         #pragma endregion
 
 int main() {
@@ -72,8 +55,14 @@ int main() {
             #pragma endregion
 
             glfwSetWindowSizeCallback(window, window_size_callback);
-            glfwSetCursorPosCallback(window, updateMousePos);
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            bool escapeKeyPressed = false;
+            double mouseX, mouseY;
+            glfwGetCursorPos(window, &mouseX, &mouseY);
+            double prevMouseX = 0.0;
+            double prevMouseY = 0.0;
+            float xoffset = mouseX - prevMouseX;
+            float yoffset = mouseY - prevMouseY;
 
             double lastFrameTime = glfwGetTime();
              
@@ -159,13 +148,22 @@ int main() {
                     escapeKeyPressed = true; // Set the state of the Escape key to pressed
                 }
 
+                double mouseX, mouseY;
+                glfwGetCursorPos(window, &mouseX, &mouseY);
+                xoffset = mouseX - prevMouseX;
+                yoffset = mouseY - prevMouseY;
+                prevMouseX = mouseX;
+                prevMouseY = mouseY;
+
                 if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
 
                     float sensitivity = 0.1f;
                     cameraYaw += xoffset * sensitivity;
                     cameraPitch += -yoffset * sensitivity;
+                    
                     xoffset = 0;
                     yoffset = 0;
+
                     if (cameraPitch > 89.0f) cameraPitch = 89.0f; // Clamp the pitch to prevent the camera from flipping
                     if (cameraPitch < -89.0f) cameraPitch = -89.0f;
                     glm::vec3 front;
@@ -175,6 +173,8 @@ int main() {
                     camera.target = camera.position + glm::normalize(front);
 
                     }
+
+
                     
                 #pragma endregion
 
