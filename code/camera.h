@@ -40,76 +40,10 @@ class Camera {
             glBindVertexArray(0);
             }
 
-        void move(float run, float strafe, float turn, float deltaTime = 1) {
-            const float cameraSpeed = 12.0f * deltaTime;
-            const float turnSpeed = 5.0f * deltaTime;
-            
-            // Calculate forward vector
-            float forwardX = target.x - position.x;
-            float forwardZ = target.z - position.z;
-            float forwardLength = sqrt(forwardX * forwardX + forwardZ * forwardZ);
-            float forwardDirX = forwardX / forwardLength;
-            float forwardDirZ = forwardZ / forwardLength;
-
-            // Calculate right vector
-            float rightX = forwardDirZ;
-            float rightZ = -forwardDirX;
-
-            // Movement controls
-            if (run == 1) {
-                position.x += cameraSpeed * forwardDirX; // Move forward along X
-                position.z += cameraSpeed * forwardDirZ; // Move forward along Z
-                target.x += cameraSpeed * forwardDirX; // Move the target along X
-                target.z += cameraSpeed * forwardDirZ; // Move the target along Z
-                }
-            
-            if (run == -1) {
-                position.x -= cameraSpeed * forwardDirX; // Move backward along X
-                position.z -= cameraSpeed * forwardDirZ; // Move backward along Z
-                target.x -= cameraSpeed * forwardDirX; // Move the target along X
-                target.z -= cameraSpeed * forwardDirZ; // Move the target along Z
-                }
-            
-            if (strafe == 1) {
-                position.x -= cameraSpeed * rightX; // Strafe left along X
-                position.z -= cameraSpeed * rightZ; // Strafe left along Z
-                target.x -= cameraSpeed * rightX; // Move the target along X
-                target.z -= cameraSpeed * rightZ; // Move the target along Z
-                }
-            
-            if (strafe == -1) {
-                position.x += cameraSpeed * rightX; // Strafe right along X
-                position.z += cameraSpeed * rightZ; // Strafe right along Z
-                target.x += cameraSpeed * rightX; // Move the target along X
-                target.z += cameraSpeed * rightZ; // Move the target along Z
-                }
-            
-
-            if (turn == 1) {
-                float cosTheta = cos(turnSpeed);
-                float sinTheta = sin(turnSpeed);
-                float newX = cosTheta * (target.x - position.x) - sinTheta * (target.z - position.z) + position.x;
-                float newZ = sinTheta * (target.x - position.x) + cosTheta * (target.z - position.z) + position.z;
-                target.x = newX;
-                target.z = newZ;
-                }
-            
-            if (turn == -1) {
-                float cosTheta = cos(-turnSpeed);
-                float sinTheta = sin(-turnSpeed);
-                float newX = cosTheta * (target.x - position.x) - sinTheta * (target.z - position.z) + position.x;
-                float newZ = sinTheta * (target.x - position.x) + cosTheta * (target.z - position.z) + position.z;
-                target.x = newX;
-                target.z = newZ;
-                }
-
-            }
-
         void setAspectRatio(float newAspectRatio) {
                 aspectRatio = newAspectRatio;
             }
 
-    private:
         float fov;
         float aspectRatio;
         float nearPlane;

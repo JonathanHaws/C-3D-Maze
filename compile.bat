@@ -1,7 +1,7 @@
 
 @echo off
 
-set output_file=main.exe
+set output_file=maze.exe
 
 if exist %output_file% ( del /F %output_file% )
 
