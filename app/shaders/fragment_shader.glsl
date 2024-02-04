@@ -1,23 +1,23 @@
 #version 330 core
 
-uniform vec3 lightDirection; // Uniform variable for light direction
-
-in vec2 TexCoord;
-in vec3 Normal;
-
 out vec4 FragColor;
 
-uniform sampler2D textureSampler;
-const float ambientStrength = 0.3; // Adjust ambient strength
-const float diffuseStrength = 0.8; // Adjust diffuse strength
+in vec2 TexCoord;
+in vec3 Normal; // Receive the normal vector from the vertex shader
 
-void main() {
+uniform sampler2D texture_diffuse1;
+uniform vec3 objectColor;    // Uniform for object color
+uniform vec3 ambientColor;   // Uniform for ambient color
+uniform vec3 lightColor;     // Uniform for light color
+uniform vec3 lightDirection;
+
+void main()
+{
+    vec3 ambient = ambientColor * objectColor;
+    vec3 norm = normalize(Normal); // Use the normal vector passed from the vertex shader
     vec3 lightDir = normalize(lightDirection);
-    float diff = max(dot(Normal, lightDir), 0.0);
-    vec3 ambient = ambientStrength * texture(textureSampler, TexCoord).rgb;
-    vec3 diffuse = diffuseStrength * diff * texture(textureSampler, TexCoord).rgb;
-    // Combine ambient and diffuse lighting for final color
-    vec3 result = ambient + diffuse;
-    // Output the final color
+    float diff = max(dot(norm, lightDir), 0.0);
+    vec3 diffuse = lightColor * (diff * objectColor);
+    vec3 result = (ambient + diffuse) * texture(texture_diffuse1, TexCoord).rgb;
     FragColor = vec4(result, 1.0);
 }

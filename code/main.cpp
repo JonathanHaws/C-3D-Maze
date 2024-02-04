@@ -42,6 +42,9 @@ int main() {
         float sunPosX = 0.1f;
         float sunPosY = 1.0f;
         float sunPosZ = 0.1f;    
+        glm::vec3 objectColor = glm::vec3(1.000f, 1.000f, 1.000f);
+        glm::vec3 ambientColor = glm::vec3(0.248f, 0.352f, 0.402f);
+        glm::vec3 lightColor = glm::vec3(0.848f, 0.692f, 0.570f);
         
         ImGuiStyle& style = ImGui::GetStyle();
         style.WindowRounding = 0.0f;
@@ -200,15 +203,23 @@ int main() {
                                 }
                             }
 
-                        if (ImGui::CollapsingHeader("Sun Position")) {
-                        ImGui::SliderFloat("Sun X", &sunPosX, -10.0f, 10.0f); 
-                        ImGui::SliderFloat("Sun Y", &sunPosY, 1.0f, 10.0f);
-                        ImGui::SliderFloat("Sun Z", &sunPosZ, -10.0f, 10.0f);
-                        }
+                        if (ImGui::CollapsingHeader("Lighting")) {
+                            ImGui::SliderFloat("Sun X", &sunPosX, -10.0f, 10.0f); 
+                            ImGui::SliderFloat("Sun Y", &sunPosY, 1.0f, 10.0f);
+                            ImGui::SliderFloat("Sun Z", &sunPosZ, -10.0f, 10.0f);
+
+                            ImGui::ColorEdit3("Object Color", glm::value_ptr(objectColor));
+                            ImGui::ColorEdit3("Ambient Color", glm::value_ptr(ambientColor));
+                            ImGui::ColorEdit3("Light Color", glm::value_ptr(lightColor));
+                            }
 
                     ImGui::End();
 
+                glUniform3fv(glGetUniformLocation(shader.getID(), "objectColor"), 1, glm::value_ptr(objectColor));
+                glUniform3fv(glGetUniformLocation(shader.getID(), "ambientColor"), 1, glm::value_ptr(ambientColor));
+                glUniform3fv(glGetUniformLocation(shader.getID(), "lightColor"), 1, glm::value_ptr(lightColor));
                 glUniform3fv(glGetUniformLocation(shader.getID(), "lightDirection"), 1, glm::value_ptr(glm::vec3(sunPosX, sunPosY, sunPosZ)));
+                
                 ImGui::Render();
                 ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
                 #pragma endregion
