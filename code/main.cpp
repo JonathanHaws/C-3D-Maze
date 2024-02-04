@@ -1,9 +1,10 @@
 
 #include <iostream>
+#include <sstream>
+#include <window.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-#include <sstream>
 #include <camera.h>
 #include <mesh.h>
 #include <texture.h>
@@ -16,58 +17,10 @@
 float cameraYaw = 0.0f;
 float cameraPitch = 0.0f;
 
-#pragma region Window Callbacks
-
-    void window_size_callback(GLFWwindow* window, int width, int height) {
-        glViewport(0, 0, width, height);
-        }
-      
-        #pragma endregion
 
 int main() {
     
-    #pragma region Window
-
-        #pragma region Create Window 
-            if (!glfwInit()) {
-                std::cerr << "Failed to initialize GLFW\n";
-                return -1;
-                }
-
-            GLFWmonitor* monitor = true ? glfwGetPrimaryMonitor() : nullptr; // fullscreen
-            GLFWwindow* window = glfwCreateWindow(1920, 1080, "Maze Game", monitor, nullptr);
-            if (!window) {
-                std::cerr << "Failed to create GLFW window\n";
-                glfwTerminate();
-                return -1;
-                }
-            #pragma endregion
-
-        #pragma region Create Context
-            glfwMakeContextCurrent(window);
-
-            GLenum err = glewInit();
-            if (err != GLEW_OK) {
-                std::cerr << "Failed to initialize GLEW\n";
-                glfwTerminate();
-                return -1;
-                }
-            #pragma endregion
-
-            glfwSetWindowSizeCallback(window, window_size_callback);
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            bool escapeKeyPressed = false;
-            double mouseX, mouseY;
-            glfwGetCursorPos(window, &mouseX, &mouseY);
-            double prevMouseX = 0.0;
-            double prevMouseY = 0.0;
-            float xoffset = mouseX - prevMouseX;
-            float yoffset = mouseY - prevMouseY;
-
-            double lastFrameTime = glfwGetTime();
-             
-        #pragma endregion
-
+    Window window(1920, 1080, "Maze", true);
     Camera camera;
     Shader shader("shaders/vertex_shader.glsl", "shaders/fragment_shader.glsl");
     Texture grass("textures/grass.bmp");
@@ -81,7 +34,7 @@ int main() {
         #pragma region setup
 
             ImGui::CreateContext();
-            ImGui_ImplGlfw_InitForOpenGL(window, true);
+            ImGui_ImplGlfw_InitForOpenGL(window.GLFW_window, true);
             ImGui_ImplOpenGL3_Init("#version 130");
             ImGui::StyleColorsDark();
             float sunPosX = 0.1f;
@@ -115,55 +68,36 @@ int main() {
 
     #pragma endregion
 
-    while (!glfwWindowShouldClose(window)) {
+    while (window.is_open()) {
 
         #pragma region Input
 
-            glfwPollEvents();
-            double currentFrameTime = glfwGetTime();
-            float deltaTime = static_cast<float>(currentFrameTime - lastFrameTime);
-            lastFrameTime = currentFrameTime;
+            window.poll_events();
          
             #pragma region camera movement
 
-                float forward = (glfwGetKey(window, GLFW_KEY_W) - glfwGetKey(window, GLFW_KEY_S)) * 12 * deltaTime;
-                float right = (glfwGetKey(window, GLFW_KEY_D) - glfwGetKey(window, GLFW_KEY_A)) * 12 * deltaTime;
+                float forward = (window.input(GLFW_KEY_W) - window.input(GLFW_KEY_S)) * 12 * window.delta_time;
+                float right = (window.input(GLFW_KEY_D) - window.input(GLFW_KEY_A)) * 12 * window.delta_time;
                 glm::vec3 forwardVector = glm::normalize(camera.target - camera.position);
                 glm::vec3 rightVector = glm::normalize(glm::cross(forwardVector, glm::vec3(0, 1, 0))); 
                 camera.position += forward * forwardVector + right * rightVector;
                 camera.target += forward * forwardVector + right * rightVector;
+
+                if (window.input_released(GLFW_KEY_ESCAPE)) {
+                    if (glfwGetInputMode(window.GLFW_window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+                        glfwSetInputMode(window.GLFW_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                    } else {
+                        glfwSetInputMode(window.GLFW_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                        }    
+                    }
                 
 
-                if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_RELEASE) {
-                    // Only toggle cursor mode if Escape key was previously pressed
-                    if (escapeKeyPressed) {
-                        if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
-                            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-                        } else {
-                            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-                            }
-                        escapeKeyPressed = false; // Reset the state of the Escape key
-                        }
-                } else if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-                    escapeKeyPressed = true; // Set the state of the Escape key to pressed
-                }
-
-                double mouseX, mouseY;
-                glfwGetCursorPos(window, &mouseX, &mouseY);
-                xoffset = mouseX - prevMouseX;
-                yoffset = mouseY - prevMouseY;
-                prevMouseX = mouseX;
-                prevMouseY = mouseY;
-
-                if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+                if (glfwGetInputMode(window.GLFW_window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
 
                     float sensitivity = 0.1f;
-                    cameraYaw += xoffset * sensitivity;
-                    cameraPitch += -yoffset * sensitivity;
+                    cameraYaw += window.mouse_delta_x * sensitivity;
+                    cameraPitch += -window.mouse_delta_y * sensitivity;
                     
-                    xoffset = 0;
-                    yoffset = 0;
-
                     if (cameraPitch > 89.0f) cameraPitch = 89.0f; // Clamp the pitch to prevent the camera from flipping
                     if (cameraPitch < -89.0f) cameraPitch = -89.0f;
                     glm::vec3 front;
@@ -173,9 +107,7 @@ int main() {
                     camera.target = camera.position + glm::normalize(front);
 
                     }
-
-
-                    
+            
                 #pragma endregion
 
             #pragma endregion
@@ -231,8 +163,7 @@ int main() {
                         }
                     ImGui::EndMenuBar();
                     }
-
-                
+        
                 #pragma region Maze Controls
 
                     ImGui::SliderInt("Width", &mazeWidth, 1, 100);
@@ -257,7 +188,7 @@ int main() {
                         if (ImGui::Button("Stop Expanding")) {
                             paused = true;
                             }
-                        maze.tick(deltaTime);
+                        maze.tick(window.delta_time);
                     } else {
                         if (ImGui::Button("Expand")) {
                             paused = false;
@@ -285,25 +216,13 @@ int main() {
                     
                     #pragma endregion
 
-                #pragma region Fullscreen
+            
+                if (ImGui::Button("Fullscreen")) {
                     
-                    if (ImGui::Button("Fullscreen")) {
-                        
-                        GLFWmonitor* currentMonitor = glfwGetWindowMonitor(window);
-                        if (currentMonitor != nullptr) {
-                            // If the window is in fullscreen mode, switch to windowed mode
-                            const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-                            glfwSetWindowMonitor(window, nullptr, 0, 50, 1920, 1080, GLFW_DONT_CARE);
-                        } else {
-                            // If the window is in windowed mode, switch to fullscreen mode
-                            GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-                            const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-                            glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
-                            }
-                        
-                        }
+                    window.set_fullscreen(!window.is_fullscreen());
                     
-                    #pragma endregion
+                    }
+                    
 
                 ImGui::End();
 
@@ -313,24 +232,17 @@ int main() {
                     #pragma endregion
 
                 #pragma endregion
-
-            glfwSwapBuffers(window);
-
-            
             
             #pragma endregion
-    
-                #pragma endregion
-    
-    }
 
-    #pragma region Cleanup
+            #pragma endregion
+
+            window.swap_buffers();
+
+            #pragma endregion
+
+        }
         
-        glfwDestroyWindow(window);
-        glfwTerminate();
-
         return 0;
         
-        #pragma endregion
-
     }
