@@ -42,6 +42,10 @@ class Window {
             glfwTerminate();
             }
 
+        void close() {
+            delete this; 
+            }
+
         bool input(int key) {
             return glfwGetKey(GLFW_window, key) == GLFW_PRESS;
             }

@@ -14,10 +14,6 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-float cameraYaw = 0.0f;
-float cameraPitch = 0.0f;
-
-
 int main() {
     
     Window window(1920, 1080, "Maze", true);
@@ -31,40 +27,40 @@ int main() {
 
     #pragma region Gui 
 
-        #pragma region setup
+        ImGui::CreateContext();
+        ImGui_ImplGlfw_InitForOpenGL(window.GLFW_window, true);
+        ImGui_ImplOpenGL3_Init("#version 130");
+        ImGui::StyleColorsDark();
 
-            ImGui::CreateContext();
-            ImGui_ImplGlfw_InitForOpenGL(window.GLFW_window, true);
-            ImGui_ImplOpenGL3_Init("#version 130");
-            ImGui::StyleColorsDark();
-            float sunPosX = 0.1f;
-            float sunPosY = 1.0f;
-            float sunPosZ = 0.1f;
-            int mazeWidth = 31;
-            int mazeHeight = 31;
-            float mazeExpandTimer = -3.0f;
-            float expansionSpeed = 0.02f; 
-            float prevExpansionSpeed = 0.02f;
-            bool paused = false;
-            
-            #pragma endregion
+        int mazeWidth = 31;
+        int mazeHeight = 31;
+        float mazeExpandTimer = -3.0f;
+        float expansionSpeed = 0.02f; 
+        float prevExpansionSpeed = 0.02f;
+        bool paused = false;
 
-        #pragma region Styling
+        float sunPosX = 0.1f;
+        float sunPosY = 1.0f;
+        float sunPosZ = 0.1f;    
+        
+        ImGuiStyle& style = ImGui::GetStyle();
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_Button] = ImVec4(0.3f, 0.3f, 0.3f, 1.0f);
+        style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.4f, 0.4f, 0.4f, 1.0f);
+        style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.2f, 0.2f, 0.2f, 1.0f);
+        style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.4f, 0.4f, 0.4f, 1.0f);
+        style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.2f, 0.2f, 0.2f, 1.0f);
+        style.Colors[ImGuiCol_FrameBg] = ImVec4(0.15f, 0.15f, 0.15f, 1.0f);
+        style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.2f, 0.2f, 0.2f, 1.0f);
+        style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.3f, 0.3f, 0.3f, 1.0f);
+        style.Colors[ImGuiCol_TitleBg] = ImVec4(0.15f, 0.15f, 0.15f, 1.0f);
+        style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.2f, 0.2f, 0.2f, 1.0f);
+        style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.15f, 0.15f, 0.15f, 1.0f);
+        style.Colors[ImGuiCol_Header] = ImVec4(0.15f, 0.15f, 0.15f, 1.0f);
+        style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.2f, 0.2f, 0.2f, 1.0f);
+        style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.3f, 0.3f, 0.3f, 1.0f);
             
-            ImGuiStyle& style = ImGui::GetStyle();
-            style.WindowRounding = 0.0f;
-            style.Colors[ImGuiCol_Button] = ImVec4(0.3f, 0.3f, 0.3f, 1.0f);
-            style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.4f, 0.4f, 0.4f, 1.0f);
-            style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.2f, 0.2f, 0.2f, 1.0f);
-            style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.4f, 0.4f, 0.4f, 1.0f);
-            style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.2f, 0.2f, 0.2f, 1.0f);
-            style.Colors[ImGuiCol_FrameBg] = ImVec4(0.15f, 0.15f, 0.15f, 1.0f);
-            style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.2f, 0.2f, 0.2f, 1.0f);
-            style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.3f, 0.3f, 0.3f, 1.0f);
-            style.Colors[ImGuiCol_TitleBg] = ImVec4(0.15f, 0.15f, 0.15f, 1.0f);
-            style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.2f, 0.2f, 0.2f, 1.0f);
-            
-            #pragma endregion
+        #pragma endregion
 
     #pragma endregion
 
@@ -75,9 +71,11 @@ int main() {
             window.poll_events();
          
             #pragma region camera movement
+            
 
-                float forward = (window.input(GLFW_KEY_W) - window.input(GLFW_KEY_S)) * 12 * window.delta_time;
-                float right = (window.input(GLFW_KEY_D) - window.input(GLFW_KEY_A)) * 12 * window.delta_time;
+                float camera_speed = 1 + (window.input(GLFW_KEY_LEFT_SHIFT) * 2); // If left shift is pressed, double the speed
+                float forward = (window.input(GLFW_KEY_W) - window.input(GLFW_KEY_S)) * 12 * camera_speed * window.delta_time;
+                float right = (window.input(GLFW_KEY_D) - window.input(GLFW_KEY_A)) * 12 * camera_speed * window.delta_time;
                 glm::vec3 forwardVector = glm::normalize(camera.target - camera.position);
                 glm::vec3 rightVector = glm::normalize(glm::cross(forwardVector, glm::vec3(0, 1, 0))); 
                 camera.position += forward * forwardVector + right * rightVector;
@@ -93,6 +91,9 @@ int main() {
                 
 
                 if (glfwGetInputMode(window.GLFW_window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+
+                    float cameraYaw = camera.get_yaw();
+                    float cameraPitch = camera.get_pitch();
 
                     float sensitivity = 0.1f;
                     cameraYaw += window.mouse_delta_x * sensitivity;
@@ -115,6 +116,9 @@ int main() {
         #pragma region Draw
 
             #pragma region Clear
+
+                //glEnable(GL_CULL_FACE);
+                //glCullFace(GL_BACK);
                 
                 glEnable(GL_DEPTH_TEST);
                 glDepthFunc(GL_LESS);
@@ -142,100 +146,72 @@ int main() {
 
             #pragma region Gui 
                 
-                #pragma region Clear
-                    ImGui_ImplOpenGL3_NewFrame();
-                    ImGui_ImplGlfw_NewFrame();
-                    ImGui::NewFrame();
-                    #pragma endregion
+                ImGui_ImplOpenGL3_NewFrame();
+                ImGui_ImplGlfw_NewFrame();
+                ImGui::NewFrame();
 
-                #pragma region Controls
                 ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always); // Set window position to top-left corner
                 ImGui::SetNextWindowSizeConstraints(ImVec2(0, -1), ImVec2(FLT_MAX, -1)); // Set width to auto-resize
+                ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+                    
+                    if (ImGui::BeginMenuBar()) {
+                        ImGui::SetWindowCollapsed(!ImGui::IsWindowCollapsed());
+                        }        
 
-                ImGui::Begin("Controls", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+                        if (ImGui::CollapsingHeader("Window")) {
+                                
+                                if (ImGui::MenuItem("Fullscreen")) {
+                                    window.set_fullscreen(!window.is_fullscreen());
+                                    }
+                                if (ImGui::MenuItem("Exit")) {
+                                    window.close();
+                                    }
+                                } 
 
-                if (ImGui::BeginMenuBar()) {
-                    if (ImGui::BeginMenu("Options")) {
-                        if (ImGui::MenuItem("Collapse")) {
-                            ImGui::SetWindowCollapsed(!ImGui::IsWindowCollapsed());
+                        if (ImGui::CollapsingHeader("Camera")) {
+                            ImGui::SliderFloat("FOV", &camera.fov, 1.0f, 179.0f);
+                            ImGui::SliderFloat("Near", &camera.nearPlane, 0.1f, 100.0f);
+                            ImGui::SliderFloat("Far", &camera.farPlane, 0.1f, 10000.0f);
                             }
-                        ImGui::EndMenu();
+
+                        if (ImGui::CollapsingHeader("Maze")) {
+                            ImGui::SliderInt("Width", &mazeWidth, 1, 400);
+                            ImGui::SliderInt("Height", &mazeHeight, 1, 400);
+                            ImGui::SliderFloat("Speed", &expansionSpeed, 0.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                            if (ImGui::Button("Reset")) {
+                                maze = Maze(mazeWidth, mazeHeight, expansionSpeed); 
+                                paused = true;
+                                }
+                            ImGui::SameLine();
+                            if (!paused) {
+                                if (ImGui::Button("Stop Expanding")) {
+                                    paused = true;
+                                    }
+                                maze.tick(window.delta_time);
+                            } else {
+                                if (ImGui::Button("Expand")) {
+                                    paused = false;
+                                    }
+                                }
+                            ImGui::SameLine();
+                            if (ImGui::Button("Expand Once")) {
+                                maze.expand();
+                                mazeExpandTimer = 0.0f; // Reset the timer for maze expansion
+                                }
+                            }
+
+                        if (ImGui::CollapsingHeader("Sun Position")) {
+                        ImGui::SliderFloat("Sun X", &sunPosX, -10.0f, 10.0f); 
+                        ImGui::SliderFloat("Sun Y", &sunPosY, 1.0f, 10.0f);
+                        ImGui::SliderFloat("Sun Z", &sunPosZ, -10.0f, 10.0f);
                         }
-                    ImGui::EndMenuBar();
-                    }
-        
-                #pragma region Maze Controls
 
-                    ImGui::SliderInt("Width", &mazeWidth, 1, 100);
-                    ImGui::SliderInt("Height", &mazeHeight, 1, 100);
-                    
-                    #pragma region Expansion Speed
-                        ImGui::SliderFloat("Speed", &expansionSpeed, 0.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-                        // Check if the expansion speed has changed
-                        if (prevExpansionSpeed != expansionSpeed) {
-                            maze.setExpandSpeed(expansionSpeed);
-                            prevExpansionSpeed = expansionSpeed; 
-                            }
-                        #pragma endregion
+                    ImGui::End();
 
-                    if (ImGui::Button("Reset")) {
-                        maze = Maze(mazeWidth, mazeHeight, expansionSpeed); 
-                        paused = true;
-                        }
-
-                    ImGui::SameLine();
-                    if (!paused) {
-                        if (ImGui::Button("Stop Expanding")) {
-                            paused = true;
-                            }
-                        maze.tick(window.delta_time);
-                    } else {
-                        if (ImGui::Button("Expand")) {
-                            paused = false;
-                            }
-                        }
-
-                    #pragma region Expand Once
-                        
-                        ImGui::SameLine();
-                        if (ImGui::Button("Expand Once")) {
-                            maze.expand();
-                            mazeExpandTimer = 0.0f; // Reset the timer for maze expansion
-                            }
-                        
-                        #pragma endregion
-
-
-                #pragma region Sun Position
-                    
-                    ImGui::SliderFloat("Sun X", &sunPosX, -10.0f, 10.0f); 
-                    ImGui::SliderFloat("Sun Y", &sunPosY, 1.0f, 10.0f);
-                    ImGui::SliderFloat("Sun Z", &sunPosZ, -10.0f, 10.0f);
-
-                    glUniform3fv(glGetUniformLocation(shader.getID(), "lightDirection"), 1, glm::value_ptr(glm::vec3(sunPosX, sunPosY, sunPosZ)));
-                    
-                    #pragma endregion
-
-            
-                if (ImGui::Button("Fullscreen")) {
-                    
-                    window.set_fullscreen(!window.is_fullscreen());
-                    
-                    }
-                    
-
-                ImGui::End();
-
-                #pragma region Draw
-                    ImGui::Render();
-                    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-                    #pragma endregion
-
+                glUniform3fv(glGetUniformLocation(shader.getID(), "lightDirection"), 1, glm::value_ptr(glm::vec3(sunPosX, sunPosY, sunPosZ)));
+                ImGui::Render();
+                ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
                 #pragma endregion
-            
-            #pragma endregion
-
-            #pragma endregion
 
             window.swap_buffers();
 

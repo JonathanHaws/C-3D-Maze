@@ -40,6 +40,20 @@ class Camera {
             glBindVertexArray(0);
             }
 
+        float get_pitch() const {
+            glm::vec3 direction = glm::normalize(target - position);
+            return glm::degrees(asin(direction.y));
+            }
+
+        float get_yaw() const {
+            glm::vec3 direction = glm::normalize(target - position);
+            float yaw = atan2(direction.z, direction.x);
+            if (yaw < 0) {
+                yaw += 2 * glm::pi<float>(); // Ensure yaw is positive
+            }
+            return glm::degrees(yaw);
+            }
+
         void setAspectRatio(float newAspectRatio) {
                 aspectRatio = newAspectRatio;
             }
