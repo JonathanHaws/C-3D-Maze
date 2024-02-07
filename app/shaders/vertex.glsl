@@ -7,10 +7,13 @@ layout (location = 2) in vec3 aNormal;
 out vec2 TexCoord; 
 out vec3 Normal;
 
-uniform mat4 MVP; 
+uniform mat4 Model;       
+uniform mat4 View;        
+uniform mat4 Projection;  
 
 void main() {
-    gl_Position = MVP * vec4(aPos, 1.0);
+    mat4 MV = View * Model;
+    gl_Position = Projection * MV * vec4(aPos, 1.0);
     TexCoord = aTexCoord;
-    Normal = aNormal; // No transformation needed
+    Normal = mat3(transpose(inverse(Model))) * aNormal;
 }

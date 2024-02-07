@@ -2,35 +2,92 @@
 #include <iostream>
 #include <sstream>
 #include <window.h>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include <graphics.h>
 #include <glm/glm.hpp>
-#include <camera.h>
-#include <mesh.h>
-#include <texture.h>
-#include <shader.h>
 #include <maze.h>
 #include <imgui.h>
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-int main() {
+Window window(1920, 1080, "Maze", true);
+Camera camera( glm::vec3(0.0f, 20.0f, -40.0f), glm::vec3(0.0f, 0.0f, -20.0f), glm::vec3(0.0f, 1.0f, 0.0f), 80.0f, 1280.0f / 720.0f, 0.1f, 1000.0f );  
+Shader shader("shaders/vertex.glsl", "shaders/fragment.glsl");
+Shader post_processing_shader("shaders/post_vertex.glsl", "shaders/post_fragment.glsl");
+Texture grass("textures/grass.bmp");
+Texture stone("textures/stone.bmp");
+Mesh wall("meshes/cube.obj");
+Mesh feild("meshes/feild.obj");
+Mesh quad("meshes/quad.obj");
+Maze maze(31, 31, 0.0);
+
+void input() {
     
-    Window window(1920, 1080, "Maze", true);
-    Camera camera;
-    Shader shader("shaders/vertex_shader.glsl", "shaders/fragment_shader.glsl");
-    Texture grass("textures/grass.bmp");
-    Texture stone("textures/stone.bmp");
-    Mesh wall("meshes/cube.obj");
-    Mesh feild("meshes/feild.obj");
-    Maze maze(31, 31, 0.0);
+    window.poll_events();
+    
+    // Camera movement
+    float camera_speed = 1 + (window.input(GLFW_KEY_LEFT_SHIFT) * 2); // If left shift is pressed, double the speed
+    float forward = (window.input(GLFW_KEY_W) - window.input(GLFW_KEY_S)) * 12 * camera_speed * window.delta_time;
+    float right = (window.input(GLFW_KEY_D) - window.input(GLFW_KEY_A)) * 12 * camera_speed * window.delta_time;
+    glm::vec3 forwardVector = glm::normalize(camera.target - camera.position);
+    glm::vec3 rightVector = glm::normalize(glm::cross(forwardVector, glm::vec3(0, 1, 0))); 
+    camera.position += forward * forwardVector + right * rightVector;
+    camera.target += forward * forwardVector + right * rightVector;
+
+    if (window.input_released(GLFW_KEY_ESCAPE)) {
+        if (glfwGetInputMode(window.GLFW_window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+            glfwSetInputMode(window.GLFW_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        } else {
+            glfwSetInputMode(window.GLFW_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            }    
+        }
+    
+    if (glfwGetInputMode(window.GLFW_window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) { // Look around only if the cursor is disabled
+
+        float cameraYaw = camera.get_yaw();
+        float cameraPitch = camera.get_pitch();
+
+        float sensitivity = 0.1f;
+        cameraYaw += window.mouse_delta_x * sensitivity;
+        cameraPitch += -window.mouse_delta_y * sensitivity;
+        
+        if (cameraPitch > 89.0f) cameraPitch = 89.0f; // Clamp the pitch to prevent the camera from flipping
+        if (cameraPitch < -89.0f) cameraPitch = -89.0f;
+        glm::vec3 front;
+        front.x = cos(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
+        front.y = sin(glm::radians(cameraPitch));
+        front.z = sin(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
+        camera.target = camera.position + glm::normalize(front);
+
+        }
+    
+    }
+
+void draw() {
+
+    shader.bind();
+
+    // Draw maze
+    auto corridors = maze.getCorridors();
+    for (int i = 0; i < corridors.size(); ++i) {
+            for (int j = 0; j < corridors[i].size(); ++j) {
+                if (corridors[i][j] == '#') {
+                    float wallX = (j - maze.getWidth() / 2) * 2.0f;
+                    float wallZ = (maze.getHeight() / 2 - i) * 2.0f;
+                    camera.draw(wall, wallX, 0, wallZ, stone, shader.getID());
+                    }
+                }
+            }
+
+    camera.draw(feild, 0, 0, 0, grass, shader.getID());
+    }
+
+int main() {
 
     #pragma region Gui 
 
         ImGui::CreateContext();
         ImGui_ImplGlfw_InitForOpenGL(window.GLFW_window, true);
         ImGui_ImplOpenGL3_Init("#version 130");
-        ImGui::StyleColorsDark();
 
         int mazeWidth = 31;
         int mazeHeight = 31;
@@ -45,6 +102,13 @@ int main() {
         glm::vec3 objectColor = glm::vec3(1.000f, 1.000f, 1.000f);
         glm::vec3 ambientColor = glm::vec3(0.248f, 0.352f, 0.402f);
         glm::vec3 lightColor = glm::vec3(0.848f, 0.692f, 0.570f);
+
+        bool depthBuffer = true;
+        bool colorBuffer = true;
+        
+        float fog_distance = 0.5f;
+        float fog_falloff = 0.5f;
+        glm::vec3 fog_color = ambientColor;
         
         ImGuiStyle& style = ImGui::GetStyle();
         style.WindowRounding = 0.0f;
@@ -69,164 +133,124 @@ int main() {
 
     while (window.is_open()) {
 
-        #pragma region Input
+        input();
 
-            window.poll_events();
-         
-            #pragma region camera movement
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+        glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        draw();
+        glFinish();
+        
+        if (window.input(GLFW_KEY_F)) {
+
+            camera.draw2d(quad, 0, 0, 0, grass, post_processing_shader.getID());
             
+            }
 
-                float camera_speed = 1 + (window.input(GLFW_KEY_LEFT_SHIFT) * 2); // If left shift is pressed, double the speed
-                float forward = (window.input(GLFW_KEY_W) - window.input(GLFW_KEY_S)) * 12 * camera_speed * window.delta_time;
-                float right = (window.input(GLFW_KEY_D) - window.input(GLFW_KEY_A)) * 12 * camera_speed * window.delta_time;
-                glm::vec3 forwardVector = glm::normalize(camera.target - camera.position);
-                glm::vec3 rightVector = glm::normalize(glm::cross(forwardVector, glm::vec3(0, 1, 0))); 
-                camera.position += forward * forwardVector + right * rightVector;
-                camera.target += forward * forwardVector + right * rightVector;
-
-                if (window.input_released(GLFW_KEY_ESCAPE)) {
-                    if (glfwGetInputMode(window.GLFW_window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
-                        glfwSetInputMode(window.GLFW_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-                    } else {
-                        glfwSetInputMode(window.GLFW_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-                        }    
-                    }
-                
-
-                if (glfwGetInputMode(window.GLFW_window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
-
-                    float cameraYaw = camera.get_yaw();
-                    float cameraPitch = camera.get_pitch();
-
-                    float sensitivity = 0.1f;
-                    cameraYaw += window.mouse_delta_x * sensitivity;
-                    cameraPitch += -window.mouse_delta_y * sensitivity;
-                    
-                    if (cameraPitch > 89.0f) cameraPitch = 89.0f; // Clamp the pitch to prevent the camera from flipping
-                    if (cameraPitch < -89.0f) cameraPitch = -89.0f;
-                    glm::vec3 front;
-                    front.x = cos(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
-                    front.y = sin(glm::radians(cameraPitch));
-                    front.z = sin(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
-                    camera.target = camera.position + glm::normalize(front);
-
-                    }
+        #pragma region Gui 
             
-                #pragma endregion
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
 
-            #pragma endregion
-
-        #pragma region Draw
-
-            #pragma region Clear
-
-                //glEnable(GL_CULL_FACE);
-                //glCullFace(GL_BACK);
+            ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always); // Set window position to top-left corner
+            ImGui::SetNextWindowSizeConstraints(ImVec2(0, -1), ImVec2(FLT_MAX, -1)); // Set width to auto-resize
+            ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
                 
-                glEnable(GL_DEPTH_TEST);
-                glDepthFunc(GL_LESS);
-                glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                
-                #pragma endregion
+                if (ImGui::BeginMenuBar()) {
+                    ImGui::SetWindowCollapsed(!ImGui::IsWindowCollapsed());
+                    }        
 
-            #pragma region Draw maze
-                
-                auto corridors = maze.getCorridors();
-                for (int i = 0; i < corridors.size(); ++i) {
-                    for (int j = 0; j < corridors[i].size(); ++j) {
-                        if (corridors[i][j] == '#') {
-                            float wallX = (j - maze.getWidth() / 2) * 2.0f;
-                            float wallZ = (maze.getHeight() / 2 - i) * 2.0f;
-                            camera.draw(wall.getVAO(), wall.getEBO(), wall.getVertexCount(), wallX, 0, wallZ, stone.getID(), shader.getID());
-                            }
+                    if (ImGui::CollapsingHeader("Window")) {
+                            
+                            if (ImGui::MenuItem("Fullscreen")) {
+                                window.set_fullscreen(!window.is_fullscreen());
+                                }
+                            if (ImGui::MenuItem("Exit")) {
+                                window.close();
+                                }
+                            } 
+
+                    if (ImGui::CollapsingHeader("Camera")) {
+                        ImGui::SliderFloat("FOV", &camera.fov, 1.0f, 179.0f);
+                        ImGui::SliderFloat("Near", &camera.nearPlane, 0.1f, 100.0f);
+                        ImGui::SliderFloat("Far", &camera.farPlane, 0.1f, 10000.0f);
                         }
-                    }
 
-                #pragma endregion
-
-            camera.draw(feild.getVAO(), feild.getEBO(), feild.getVertexCount(), 0, 0, 0, grass.getID(), shader.getID());
-
-            #pragma region Gui 
-                
-                ImGui_ImplOpenGL3_NewFrame();
-                ImGui_ImplGlfw_NewFrame();
-                ImGui::NewFrame();
-
-                ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always); // Set window position to top-left corner
-                ImGui::SetNextWindowSizeConstraints(ImVec2(0, -1), ImVec2(FLT_MAX, -1)); // Set width to auto-resize
-                ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
-                    
-                    if (ImGui::BeginMenuBar()) {
-                        ImGui::SetWindowCollapsed(!ImGui::IsWindowCollapsed());
-                        }        
-
-                        if (ImGui::CollapsingHeader("Window")) {
-                                
-                                if (ImGui::MenuItem("Fullscreen")) {
-                                    window.set_fullscreen(!window.is_fullscreen());
-                                    }
-                                if (ImGui::MenuItem("Exit")) {
-                                    window.close();
-                                    }
-                                } 
-
-                        if (ImGui::CollapsingHeader("Camera")) {
-                            ImGui::SliderFloat("FOV", &camera.fov, 1.0f, 179.0f);
-                            ImGui::SliderFloat("Near", &camera.nearPlane, 0.1f, 100.0f);
-                            ImGui::SliderFloat("Far", &camera.farPlane, 0.1f, 10000.0f);
+                    if (ImGui::CollapsingHeader("Maze")) {
+                        ImGui::SliderInt("Width", &mazeWidth, 1, 400);
+                        ImGui::SliderInt("Height", &mazeHeight, 1, 400);
+                        ImGui::SliderFloat("Speed", &expansionSpeed, 0.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+                        if (ImGui::Button("Reset")) {
+                            maze = Maze(mazeWidth, mazeHeight, expansionSpeed); 
+                            paused = true;
                             }
-
-                        if (ImGui::CollapsingHeader("Maze")) {
-                            ImGui::SliderInt("Width", &mazeWidth, 1, 400);
-                            ImGui::SliderInt("Height", &mazeHeight, 1, 400);
-                            ImGui::SliderFloat("Speed", &expansionSpeed, 0.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-                            if (ImGui::Button("Reset")) {
-                                maze = Maze(mazeWidth, mazeHeight, expansionSpeed); 
+                        ImGui::SameLine();
+                        if (!paused) {
+                            if (ImGui::Button("Stop Expanding")) {
                                 paused = true;
                                 }
-                            ImGui::SameLine();
-                            if (!paused) {
-                                if (ImGui::Button("Stop Expanding")) {
-                                    paused = true;
-                                    }
-                                maze.tick(window.delta_time);
-                            } else {
-                                if (ImGui::Button("Expand")) {
-                                    paused = false;
-                                    }
-                                }
-                            ImGui::SameLine();
-                            if (ImGui::Button("Expand Once")) {
-                                maze.expand();
-                                mazeExpandTimer = 0.0f; // Reset the timer for maze expansion
+                            maze.tick(window.delta_time);
+                        } else {
+                            if (ImGui::Button("Expand")) {
+                                paused = false;
                                 }
                             }
-
-                        if (ImGui::CollapsingHeader("Lighting")) {
-                            ImGui::SliderFloat("Sun X", &sunPosX, -10.0f, 10.0f); 
-                            ImGui::SliderFloat("Sun Y", &sunPosY, 1.0f, 10.0f);
-                            ImGui::SliderFloat("Sun Z", &sunPosZ, -10.0f, 10.0f);
-
-                            ImGui::ColorEdit3("Object Color", glm::value_ptr(objectColor));
-                            ImGui::ColorEdit3("Ambient Color", glm::value_ptr(ambientColor));
-                            ImGui::ColorEdit3("Light Color", glm::value_ptr(lightColor));
+                        ImGui::SameLine();
+                        if (ImGui::Button("Expand Once")) {
+                            maze.expand();
+                            mazeExpandTimer = 0.0f; // Reset the timer for maze expansion
                             }
+                        }
 
-                    ImGui::End();
+                    if (ImGui::CollapsingHeader("Lighting")) {
+                        ImGui::SliderFloat("Sun X", &sunPosX, -10.0f, 10.0f); 
+                        ImGui::SliderFloat("Sun Y", &sunPosY, 1.0f, 10.0f);
+                        ImGui::SliderFloat("Sun Z", &sunPosZ, -10.0f, 10.0f);
 
-                glUniform3fv(glGetUniformLocation(shader.getID(), "objectColor"), 1, glm::value_ptr(objectColor));
-                glUniform3fv(glGetUniformLocation(shader.getID(), "ambientColor"), 1, glm::value_ptr(ambientColor));
-                glUniform3fv(glGetUniformLocation(shader.getID(), "lightColor"), 1, glm::value_ptr(lightColor));
-                glUniform3fv(glGetUniformLocation(shader.getID(), "lightDirection"), 1, glm::value_ptr(glm::vec3(sunPosX, sunPosY, sunPosZ)));
-                
-                ImGui::Render();
-                ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-                #pragma endregion
+                        ImGui::ColorEdit3("Object Color", glm::value_ptr(objectColor));
+                        ImGui::ColorEdit3("Ambient Color", glm::value_ptr(ambientColor));
+                        ImGui::ColorEdit3("Light Color", glm::value_ptr(lightColor));
+                        }
 
-            window.swap_buffers();
+                    if (ImGui::CollapsingHeader("Drawing")) {
+                        ImGui::Checkbox("Depth Buffer", &depthBuffer);
+                        ImGui::Checkbox("Color Buffer", &colorBuffer);
+                        }
 
+                    if (ImGui::CollapsingHeader("Fog")) {
+                        ImGui::SliderFloat("Distance", &fog_distance, 0.0f, 1.0f);
+                        ImGui::SliderFloat("Falloff", &fog_falloff, 0.0f, 1.0f); 
+                        ImGui::ColorEdit3("Color", glm::value_ptr(fog_color));
+
+                        }
+
+                ImGui::End();
+            
+            glUniform3fv(glGetUniformLocation(shader.getID(), "lightDirection"), 1, glm::value_ptr(glm::vec3(sunPosX, sunPosY, sunPosZ)));
+            glUniform3fv(glGetUniformLocation(shader.getID(), "objectColor"), 1, glm::value_ptr(objectColor));
+            glUniform3fv(glGetUniformLocation(shader.getID(), "ambientColor"), 1, glm::value_ptr(ambientColor));
+            glUniform3fv(glGetUniformLocation(shader.getID(), "lightColor"), 1, glm::value_ptr(lightColor));
+
+            glUniform1i(glGetUniformLocation(shader.getID(), "depthBuffer"), depthBuffer);
+            glUniform1i(glGetUniformLocation(shader.getID(), "colorBuffer"), colorBuffer);
+            
+
+            
+            glUniform1f(glGetUniformLocation(shader.getID(), "fog_distance"), fog_distance);
+            glUniform1f(glGetUniformLocation(shader.getID(), "fog_falloff"), fog_falloff);
+            glUniform3fv(glGetUniformLocation(shader.getID(), "fog_color"), 1, glm::value_ptr(fog_color));
+
+
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
             #pragma endregion
+
+        window.swap_buffers();
+
+        #pragma endregion
 
         }
         

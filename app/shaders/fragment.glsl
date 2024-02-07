@@ -3,12 +3,12 @@
 out vec4 FragColor;
 
 in vec2 TexCoord;
-in vec3 Normal; // Receive the normal vector from the vertex shader
+in vec3 Normal;
 
 uniform sampler2D texture_diffuse1;
-uniform vec3 objectColor;    // Uniform for object color
-uniform vec3 ambientColor;   // Uniform for ambient color
-uniform vec3 lightColor;     // Uniform for light color
+uniform vec3 objectColor;    
+uniform vec3 ambientColor;   
+uniform vec3 lightColor;     
 uniform vec3 lightDirection;
 
 void main()
@@ -18,6 +18,7 @@ void main()
     vec3 lightDir = normalize(lightDirection);
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = lightColor * (diff * objectColor);
-    vec3 result = (ambient + diffuse) * texture(texture_diffuse1, TexCoord).rgb;
-    FragColor = vec4(result, 1.0);
+    vec3 finalColor = (ambient + diffuse) * texture(texture_diffuse1, TexCoord).rgb;
+     
+    FragColor = vec4(finalColor, 1.0);
 }
