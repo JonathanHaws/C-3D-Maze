@@ -9,79 +9,18 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-Window window(1920, 1080, "Maze", true);
-Camera camera( glm::vec3(0.0f, 20.0f, -40.0f), glm::vec3(0.0f, 0.0f, -20.0f), glm::vec3(0.0f, 1.0f, 0.0f), 80.0f, 1280.0f / 720.0f, 0.1f, 1000.0f );  
-Shader shader("shaders/vertex.glsl", "shaders/fragment.glsl");
-Shader post_processing_shader("shaders/post_vertex.glsl", "shaders/post_fragment.glsl");
-Texture grass("textures/grass.bmp");
-Texture stone("textures/stone.bmp");
-Mesh wall("meshes/cube.obj");
-Mesh feild("meshes/feild.obj");
-Mesh quad("meshes/quad.obj");
-Maze maze(31, 31, 0.0);
-
-void input() {
-    
-    window.poll_events();
-    
-    // Camera movement
-    float camera_speed = 1 + (window.input(GLFW_KEY_LEFT_SHIFT) * 2); // If left shift is pressed, double the speed
-    float forward = (window.input(GLFW_KEY_W) - window.input(GLFW_KEY_S)) * 12 * camera_speed * window.delta_time;
-    float right = (window.input(GLFW_KEY_D) - window.input(GLFW_KEY_A)) * 12 * camera_speed * window.delta_time;
-    glm::vec3 forwardVector = glm::normalize(camera.target - camera.position);
-    glm::vec3 rightVector = glm::normalize(glm::cross(forwardVector, glm::vec3(0, 1, 0))); 
-    camera.position += forward * forwardVector + right * rightVector;
-    camera.target += forward * forwardVector + right * rightVector;
-
-    if (window.input_released(GLFW_KEY_ESCAPE)) {
-        if (glfwGetInputMode(window.GLFW_window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
-            glfwSetInputMode(window.GLFW_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        } else {
-            glfwSetInputMode(window.GLFW_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            }    
-        }
-    
-    if (glfwGetInputMode(window.GLFW_window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) { // Look around only if the cursor is disabled
-
-        float cameraYaw = camera.get_yaw();
-        float cameraPitch = camera.get_pitch();
-
-        float sensitivity = 0.1f;
-        cameraYaw += window.mouse_delta_x * sensitivity;
-        cameraPitch += -window.mouse_delta_y * sensitivity;
-        
-        if (cameraPitch > 89.0f) cameraPitch = 89.0f; // Clamp the pitch to prevent the camera from flipping
-        if (cameraPitch < -89.0f) cameraPitch = -89.0f;
-        glm::vec3 front;
-        front.x = cos(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
-        front.y = sin(glm::radians(cameraPitch));
-        front.z = sin(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
-        camera.target = camera.position + glm::normalize(front);
-
-        }
-    
-    }
-
-void draw() {
-
-    shader.bind();
-
-    // Draw maze
-    auto corridors = maze.getCorridors();
-    for (int i = 0; i < corridors.size(); ++i) {
-            for (int j = 0; j < corridors[i].size(); ++j) {
-                if (corridors[i][j] == '#') {
-                    float wallX = (j - maze.getWidth() / 2) * 2.0f;
-                    float wallZ = (maze.getHeight() / 2 - i) * 2.0f;
-                    camera.draw(wall, wallX, 0, wallZ, stone, shader.getID());
-                    }
-                }
-            }
-
-    camera.draw(feild, 0, 0, 0, grass, shader.getID());
-    }
-
 int main() {
+
+    Window window(1920, 1080, "Maze", true);
+    Camera camera( glm::vec3(0.0f, 20.0f, -40.0f), glm::vec3(0.0f, 0.0f, -20.0f), glm::vec3(0.0f, 1.0f, 0.0f), 80.0f, 1280.0f / 720.0f, 0.1f, 1000.0f );  
+    Shader regularShader("shaders/regular_v.glsl", "shaders/regular_f.glsl");
+    Shader postShader("shaders/post_v.glsl", "shaders/post_f.glsl");
+    Texture grass("textures/grass.bmp");
+    Texture stone("textures/stone.bmp");
+    Mesh wall("meshes/cube.obj");
+    Mesh feild("meshes/feild.obj");
+    Mesh quad("meshes/quad.obj");
+    Maze maze(31, 31, 0.0);
 
     #pragma region Gui 
 
@@ -133,22 +72,69 @@ int main() {
 
     while (window.is_open()) {
 
-        input();
+        #pragma region Input
+
+            window.poll_events();
+        
+            // Camera movement
+            float camera_speed = 1 + (window.input(GLFW_KEY_LEFT_SHIFT) * 2); // If left shift is pressed, double the speed
+            float forward = (window.input(GLFW_KEY_W) - window.input(GLFW_KEY_S)) * 12 * camera_speed * window.delta_time;
+            float right = (window.input(GLFW_KEY_D) - window.input(GLFW_KEY_A)) * 12 * camera_speed * window.delta_time;
+            glm::vec3 forwardVector = glm::normalize(camera.target - camera.position);
+            glm::vec3 rightVector = glm::normalize(glm::cross(forwardVector, glm::vec3(0, 1, 0))); 
+            camera.position += forward * forwardVector + right * rightVector;
+            camera.target += forward * forwardVector + right * rightVector;
+
+            // Toggle cursor
+            if (window.input_released(GLFW_KEY_ESCAPE)) {
+                if (glfwGetInputMode(window.GLFW_window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+                    glfwSetInputMode(window.GLFW_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                } else {
+                    glfwSetInputMode(window.GLFW_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                    }    
+                }
+            
+            // Look around
+            if (glfwGetInputMode(window.GLFW_window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) { // Look around only if the cursor is disabled
+
+                float cameraYaw = camera.get_yaw();
+                float cameraPitch = camera.get_pitch();
+
+                float sensitivity = 0.1f;
+                cameraYaw += window.mouse_delta_x * sensitivity;
+                cameraPitch += -window.mouse_delta_y * sensitivity;
+                
+                if (cameraPitch > 89.0f) cameraPitch = 89.0f; // Clamp the pitch to prevent the camera from flipping
+                if (cameraPitch < -89.0f) cameraPitch = -89.0f;
+                glm::vec3 front;
+                front.x = cos(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
+                front.y = sin(glm::radians(cameraPitch));
+                front.z = sin(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
+                camera.target = camera.position + glm::normalize(front);
+
+                }
+                
+            #pragma endregion
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
-        glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+        glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        draw();
-        glFinish();
-        
-        if (window.input(GLFW_KEY_F)) {
-
-            camera.draw2d(quad, 0, 0, 0, grass, post_processing_shader.getID());
-            
+        auto corridors = maze.getCorridors();
+        for (int i = 0; i < corridors.size(); ++i) {
+            for (int j = 0; j < corridors[i].size(); ++j) {
+                if (corridors[i][j] == '#') {
+                    float wallX = (j - maze.getWidth() / 2) * 2.0f;
+                    float wallZ = (maze.getHeight() / 2 - i) * 2.0f;
+                    draw(wall, stone.getID(), regularShader.getID(), camera.get_viewMatrix(), camera.get_projectionMatrix(), glm::translate(glm::identity<glm::mat4>(), glm::vec3(wallX, 0, wallZ)));
+                    }
+                }
             }
 
+        draw(feild, grass.getID(), regularShader.getID(), camera.get_viewMatrix(), camera.get_projectionMatrix());
+        draw(quad, grass.getID(), postShader.getID());
+      
         #pragma region Gui 
             
             ImGui_ImplOpenGL3_NewFrame();
@@ -229,20 +215,17 @@ int main() {
 
                 ImGui::End();
             
-            glUniform3fv(glGetUniformLocation(shader.getID(), "lightDirection"), 1, glm::value_ptr(glm::vec3(sunPosX, sunPosY, sunPosZ)));
-            glUniform3fv(glGetUniformLocation(shader.getID(), "objectColor"), 1, glm::value_ptr(objectColor));
-            glUniform3fv(glGetUniformLocation(shader.getID(), "ambientColor"), 1, glm::value_ptr(ambientColor));
-            glUniform3fv(glGetUniformLocation(shader.getID(), "lightColor"), 1, glm::value_ptr(lightColor));
+            glUniform3fv(glGetUniformLocation(regularShader.getID(), "lightDirection"), 1, glm::value_ptr(glm::vec3(sunPosX, sunPosY, sunPosZ)));
+            glUniform3fv(glGetUniformLocation(regularShader.getID(), "objectColor"), 1, glm::value_ptr(objectColor));
+            glUniform3fv(glGetUniformLocation(regularShader.getID(), "ambientColor"), 1, glm::value_ptr(ambientColor));
+            glUniform3fv(glGetUniformLocation(regularShader.getID(), "lightColor"), 1, glm::value_ptr(lightColor));
 
-            glUniform1i(glGetUniformLocation(shader.getID(), "depthBuffer"), depthBuffer);
-            glUniform1i(glGetUniformLocation(shader.getID(), "colorBuffer"), colorBuffer);
+            glUniform1i(glGetUniformLocation(regularShader.getID(), "depthBuffer"), depthBuffer);
+            glUniform1i(glGetUniformLocation(regularShader.getID(), "colorBuffer"), colorBuffer);
             
-
-            
-            glUniform1f(glGetUniformLocation(shader.getID(), "fog_distance"), fog_distance);
-            glUniform1f(glGetUniformLocation(shader.getID(), "fog_falloff"), fog_falloff);
-            glUniform3fv(glGetUniformLocation(shader.getID(), "fog_color"), 1, glm::value_ptr(fog_color));
-
+            glUniform1f(glGetUniformLocation(regularShader.getID(), "fog_distance"), fog_distance);
+            glUniform1f(glGetUniformLocation(regularShader.getID(), "fog_falloff"), fog_falloff);
+            glUniform3fv(glGetUniformLocation(regularShader.getID(), "fog_color"), 1, glm::value_ptr(fog_color));
 
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -255,5 +238,5 @@ int main() {
         }
         
         return 0;
-        
+   
     }

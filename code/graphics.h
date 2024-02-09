@@ -18,6 +18,7 @@ class Shader {
             id = linkShaders(vertexShader, fragmentShader); // Combines and links the shaders into a single shader program
             glDeleteShader(vertexShader);
             glDeleteShader(fragmentShader);
+            glFinish();
             }
 
         ~Shader() { 
@@ -99,18 +100,6 @@ class Texture {
         std::vector<unsigned char> imageData;
     
     public:
-        Texture(int width, int height, GLenum component) { // generate texture from default frame buffer
-            glGenTextures(1, &textureID);
-            glBindTexture(GL_TEXTURE_2D, textureID);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-            glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, 0, width, height, 0);
-        }
-
 
         Texture(const std::string& filepath) {
             // Load image data from bitmap file
@@ -145,6 +134,8 @@ class Texture {
 
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, imageData.data());
             glGenerateMipmap(GL_TEXTURE_2D);
+
+            glBindTexture(GL_TEXTURE_2D, 0);         
             }
 
         ~Texture() {
@@ -160,24 +151,6 @@ class Texture {
                 std::cout << static_cast<int>(imageData[i]) << " ";
                 }
             std::cout << std::endl;
-            }
-
-        void genBuffer() {
-            glGenTextures(1, &textureID);
-            glBindTexture(GL_TEXTURE_2D, textureID);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, imageData.data());
-            glGenerateMipmap(GL_TEXTURE_2D);
-        }
-
-        void bind(int textureUnit) const {
-            glActiveTexture(GL_TEXTURE0 + textureUnit);
-            glBindTexture(GL_TEXTURE_2D, textureID);
             }
 
         int getWidth() const { return width; }
@@ -362,25 +335,6 @@ class Camera {
                 float nearPlane = 0.1f,
                 float farPlane = 1000.0f)
                 : position(initialPosition), target(initialTarget), up(initialUp), fov(fov), aspectRatio(aspectRatio), nearPlane(nearPlane), farPlane(farPlane) {}
-                
-        void draw(Mesh& mesh, float x, float y, float z, Texture& texture, unsigned int shaderProgram) const {
-
-            glUseProgram(shaderProgram);
-    
-            glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "Model"), 1, GL_FALSE, glm::value_ptr(glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z))));
-            glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "View"), 1, GL_FALSE, glm::value_ptr(glm::lookAt(position, target, up)));
-            glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "Projection"), 1, GL_FALSE, glm::value_ptr(glm::perspective(glm::radians(fov), aspectRatio, nearPlane, farPlane)));
-
-            texture.bind(0);
-            mesh.draw();
-            }
-        
-        void draw2d(Mesh& mesh, float x, float y, float z, Texture& texture, unsigned int shaderProgramtousetodraw) const {
-
-            glUseProgram(shaderProgramtousetodraw);
-            texture.bind(0);
-            mesh.draw();
-            }
 
         float get_pitch() const {
             glm::vec3 direction = glm::normalize(target - position);
@@ -396,6 +350,14 @@ class Camera {
             return glm::degrees(yaw);
             }
 
+        glm::mat4 get_viewMatrix() const {
+            return glm::lookAt(position, target, up);
+            }
+
+        glm::mat4 get_projectionMatrix() const {
+            return glm::perspective(glm::radians(fov), aspectRatio, nearPlane, farPlane);
+            }
+
         void setAspectRatio(float newAspectRatio) {
             aspectRatio = newAspectRatio;
             }
@@ -408,3 +370,24 @@ class Camera {
         glm::vec3 target;
         glm::vec3 up;
         };
+
+void check_for_gl_errors() {
+    GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cerr << "OpenGL Error: " << err << std::endl;
+        }
+    }
+
+void draw(Mesh& mesh, unsigned int texture, unsigned int shader, const glm::mat4& view = glm::mat4(1.0f), const glm::mat4& projection = glm::mat4(1.0f), const glm::mat4& model = glm::mat4(1.0f)) {
+    
+    glUseProgram(shader);        
+    
+    glUniformMatrix4fv(glGetUniformLocation(shader, "Model"), 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(glGetUniformLocation(shader, "View"), 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(glGetUniformLocation(shader, "Projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    mesh.draw();
+    }
