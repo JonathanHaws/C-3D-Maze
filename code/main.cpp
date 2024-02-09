@@ -133,7 +133,10 @@ int main() {
             }
 
         draw(feild, grass.getID(), regularShader.getID(), camera.get_viewMatrix(), camera.get_projectionMatrix());
-        draw(quad, grass.getID(), postShader.getID());
+
+        if (window.input(GLFW_KEY_F)) {
+            draw(quad, grass.getID(), postShader.getID());
+            }
       
         #pragma region Gui 
             
