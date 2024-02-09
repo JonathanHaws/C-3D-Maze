@@ -27,6 +27,8 @@ int main() {
         ImGui::CreateContext();
         ImGui_ImplGlfw_InitForOpenGL(window.GLFW_window, true);
         ImGui_ImplOpenGL3_Init("#version 130");
+        ImGuiIO& io = ImGui::GetIO();
+        io.IniFilename = NULL; // Disable saving users gui settings / state to ini file
 
         int mazeWidth = 31;
         int mazeHeight = 31;
