@@ -5,10 +5,28 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+void clear_gl_errors() {
+    while (glGetError() != GL_NO_ERROR);
+    }
+    
+void check_gl_errors() {
+    GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cerr << "OpenGL Error: " << err << std::endl;
+        }
+    }
+void check_gl_version() {
+    const GLubyte* version = glGetString(GL_VERSION);
+    if (version) {
+        std::cout << "OpenGL Version: " << version << std::endl;
+    } else {
+        std::cerr << "Failed to retrieve OpenGL version." << std::endl;
+    }
+}
 
 class Shader {
     public:
@@ -18,7 +36,6 @@ class Shader {
             id = linkShaders(vertexShader, fragmentShader); // Combines and links the shaders into a single shader program
             glDeleteShader(vertexShader);
             glDeleteShader(fragmentShader);
-            glFinish();
             }
 
         ~Shader() { 
@@ -90,74 +107,82 @@ class Shader {
         }
     };
 
-class Texture {
-    
-    private:
-        
-        int width = 0; 
-        int height = 0;
-        unsigned int textureID = 0; // Texture ID
-        std::vector<unsigned char> imageData;
-    
-    public:
+class Texture { 
+private:
+    int width = 0; 
+    int height = 0;
+    unsigned int textureID = 0; // Texture ID
+    std::vector<unsigned char> imageData;
 
-        Texture(const std::string& filepath) {
-            // Load image data from bitmap file
-            std::ifstream file(filepath, std::ios::binary);
-            if (!file.is_open()) {
-                std::cerr << "Error: Unable to open file: " << filepath << std::endl;
-                return;
-                }
-            file.seekg(18);
-            file.read(reinterpret_cast<char*>(&width), sizeof(width));
-            file.read(reinterpret_cast<char*>(&height), sizeof(height));
-            if (width <= 0 || height <= 0) {
-                std::cerr << "Error: Invalid image dimensions in file: " << filepath << std::endl;
-                return;
-                }
-            size_t imageSize = width * height * 3;
-            imageData.resize(imageSize);
-            file.seekg(54);
-            file.read(reinterpret_cast<char*>(imageData.data()), imageSize);
-            if (imageData.empty()) {
-                std::cerr << "Error: Failed to read image data from file: " << filepath << std::endl;
-                return;
-                }
+public:
 
-            glGenTextures(1, &textureID);
-            glBindTexture(GL_TEXTURE_2D, textureID);
+    Texture(const std::string& filepath) {
 
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, imageData.data());
-            glGenerateMipmap(GL_TEXTURE_2D);
-
-            glBindTexture(GL_TEXTURE_2D, 0);         
+        // Load image data from bitmap file
+        std::ifstream file(filepath, std::ios::binary);
+        if (!file.is_open()) {
+            std::cerr << "Error: Unable to open file: " << filepath << std::endl;
+            return;
+            }
+        file.seekg(18);
+        file.read(reinterpret_cast<char*>(&width), sizeof(width));
+        file.read(reinterpret_cast<char*>(&height), sizeof(height));
+        if (width <= 0 || height <= 0) {
+            std::cerr << "Error: Invalid image dimensions in file: " << filepath << std::endl;
+            return;
+            }
+        size_t imageSize = width * height * 3;
+        imageData.resize(imageSize);
+        file.seekg(54);
+        file.read(reinterpret_cast<char*>(imageData.data()), imageSize);
+        if (imageData.empty()) {
+            std::cerr << "Error: Failed to read image data from file: " << filepath << std::endl;
+            return;
             }
 
-        ~Texture() {
-            if (textureID != 0) {
-                glDeleteTextures(1, &textureID);
-                textureID = 0;
-                }
-            }
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
 
-        void printImageData() const {
-            std::cout << "Image Data:" << std::endl;
-            for (size_t i = 0; i < imageData.size(); ++i) {
-                std::cout << static_cast<int>(imageData[i]) << " ";
-                }
-            std::cout << std::endl;
-            }
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-        int getWidth() const { return width; }
-        int getHeight() const { return height; }
-        unsigned int getID() const { return textureID; }
-        const std::vector<unsigned char>& getImageData() const { return imageData; }
-    };
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+        //Gives error but works fine need to find a way to do error checking with glew extensions     
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, imageData.data());
+
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glBindTexture(GL_TEXTURE_2D, 0);    
+
+        }
+
+    ~Texture() {
+        if (textureID != 0) {
+            glDeleteTextures(1, &textureID);
+            textureID = 0;
+            }
+        }
+
+    void printImageData() const {
+        std::cout << "Image Data:" << std::endl;
+        for (size_t i = 0; i < imageData.size(); ++i) {
+            std::cout << static_cast<int>(imageData[i]) << " ";
+            }
+        std::cout << std::endl;
+        }
+
+    void bind(unsigned int texture_unit) const {
+        glActiveTexture(GL_TEXTURE0 + texture_unit);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        }
+
+    int getWidth() const { return width; }
+    int getHeight() const { return height; }
+    unsigned int getID() const { return textureID; }
+    const std::vector<unsigned char>& getImageData() const { return imageData; }
+};
 
 class Mesh {
     
@@ -325,7 +350,6 @@ class Mesh {
     };
 
 class Camera {
-
     public:
         Camera(const glm::vec3& initialPosition = glm::vec3(0.0f, 20.0f, -40.0f),
                 const glm::vec3& initialTarget = glm::vec3(0.0f, 0.0f, -20.0f),
@@ -358,7 +382,7 @@ class Camera {
             return glm::perspective(glm::radians(fov), aspectRatio, nearPlane, farPlane);
             }
 
-        void setAspectRatio(float newAspectRatio) {
+        void set_aspect_ratio(float newAspectRatio) {
             aspectRatio = newAspectRatio;
             }
 
@@ -370,24 +394,74 @@ class Camera {
         glm::vec3 target;
         glm::vec3 up;
         };
+class Framebuffer {
+public:
+    Framebuffer(int width, int height) : m_width(width), m_height(height) {
+        // Create framebuffer object
+        glGenFramebuffers(1, &m_fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 
-void check_for_gl_errors() {
-    GLenum err;
-    while ((err = glGetError()) != GL_NO_ERROR) {
-        std::cerr << "OpenGL Error: " << err << std::endl;
+        // Create color texture attachment
+        glGenTextures(1, &m_color_texture);
+        glBindTexture(GL_TEXTURE_2D, m_color_texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_color_texture, 0);
+
+         // Create depth texture attachment
+        glGenTextures(1, &m_depth_texture);
+        glBindTexture(GL_TEXTURE_2D, m_depth_texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth_texture, 0);
+
+        // Check framebuffer completeness
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            std::cerr << "Framebuffer is not complete!" << std::endl;
         }
+
+        // Unbind framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-void draw(Mesh& mesh, unsigned int texture, unsigned int shader, const glm::mat4& view = glm::mat4(1.0f), const glm::mat4& projection = glm::mat4(1.0f), const glm::mat4& model = glm::mat4(1.0f)) {
-    
-    glUseProgram(shader);        
-    
-    glUniformMatrix4fv(glGetUniformLocation(shader, "Model"), 1, GL_FALSE, glm::value_ptr(model));
-    glUniformMatrix4fv(glGetUniformLocation(shader, "View"), 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(glGetUniformLocation(shader, "Projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    ~Framebuffer() {
+        // Delete framebuffer and texture
+        glDeleteFramebuffers(1, &m_fbo);
+        glDeleteTextures(1, &m_color_texture);
+        glDeleteTextures(1, &m_depth_texture);
+    }
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    void bind() {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+    }
+
+    void unbind() {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    GLuint getColorTexture() const {
+        return m_color_texture;
+    }
+
+    GLuint getDepthTexture() const {
+        return m_depth_texture;
+    }
+
+private:
+    GLuint m_fbo;
+    GLuint m_color_texture;
+    GLuint m_depth_texture;
+    int m_width;
+    int m_height;
+};
+
+void draw(Mesh& mesh,
+    const glm::mat4& view = glm::mat4(1.0f), 
+    const glm::mat4& projection = glm::mat4(1.0f), 
+    const glm::mat4& model = glm::mat4(1.0f)) {
+
 
     mesh.draw();
     }

@@ -7,9 +7,7 @@
 #include <unordered_map>
 
 class Window {
-    
-    public: 
-        
+    public:      
         Window (int width, int height, const char* title, bool fullscreen) : width(width), height(height), title(title), fullscreen(fullscreen) {
             
             if (!glfwInit()) {
@@ -89,19 +87,20 @@ class Window {
         void swap_buffers() {
             glfwSwapBuffers(GLFW_window);
             }
-
-        int mouse_delta_x, mouse_delta_y, mouse_previous_x, mouse_previous_y;
-        float delta_time, previous_time;
+        float get_time() {
+            return glfwGetTime();
+            }
         
-        int width, height;
+        
+        int mouse_delta_x, mouse_delta_y, mouse_previous_x, mouse_previous_y;
+        float delta_time, previous_time;      
+        float width, height;
         const char* title;
         bool fullscreen;
         GLFWwindow* GLFW_window;
     
     private:
-
         std::unordered_map<int, int> previous_keys;
-
         static void window_size_callback(GLFWwindow* window, int width, int height) {
             glViewport(0, 0, width, height);
             }

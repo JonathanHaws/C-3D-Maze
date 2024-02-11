@@ -6,21 +6,28 @@
 #include <glm/glm.hpp>
 #include <maze.h>
 #include <imgui.h>
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 
 int main() {
 
     Window window(1920, 1080, "Maze", true);
-    Camera camera( glm::vec3(0.0f, 20.0f, -40.0f), glm::vec3(0.0f, 0.0f, -20.0f), glm::vec3(0.0f, 1.0f, 0.0f), 80.0f, 1280.0f / 720.0f, 0.1f, 1000.0f );  
+    Camera camera( glm::vec3(0.0f, 20.0f, -40.0f), glm::vec3(0.0f, 0.0f, -20.0f), glm::vec3(0.0f, 1.0f, 0.0f), 80.0f, 1280.0f / 720.0f, 0.1f, 1000.0f ); 
+    Framebuffer framebuffer(1920, 1080);
+
     Shader regularShader("shaders/regular_v.glsl", "shaders/regular_f.glsl");
     Shader postShader("shaders/post_v.glsl", "shaders/post_f.glsl");
+
     Texture grass("textures/grass.bmp");
     Texture stone("textures/stone.bmp");
+       
     Mesh wall("meshes/cube.obj");
     Mesh feild("meshes/feild.obj");
     Mesh quad("meshes/quad.obj");
+    
     Maze maze(31, 31, 0.0);
+
+    regularShader.bind();
 
     #pragma region Gui 
 
@@ -30,27 +37,6 @@ int main() {
         ImGuiIO& io = ImGui::GetIO();
         io.IniFilename = NULL; // Disable saving users gui settings / state to ini file
 
-        int mazeWidth = 31;
-        int mazeHeight = 31;
-        float mazeExpandTimer = -3.0f;
-        float expansionSpeed = 0.02f; 
-        float prevExpansionSpeed = 0.02f;
-        bool paused = false;
-
-        float sunPosX = 0.1f;
-        float sunPosY = 1.0f;
-        float sunPosZ = 0.1f;    
-        glm::vec3 objectColor = glm::vec3(1.000f, 1.000f, 1.000f);
-        glm::vec3 ambientColor = glm::vec3(0.248f, 0.352f, 0.402f);
-        glm::vec3 lightColor = glm::vec3(0.848f, 0.692f, 0.570f);
-
-        bool depthBuffer = true;
-        bool colorBuffer = true;
-        
-        float fog_distance = 0.5f;
-        float fog_falloff = 0.5f;
-        glm::vec3 fog_color = ambientColor;
-        
         ImGuiStyle& style = ImGui::GetStyle();
         style.WindowRounding = 0.0f;
         style.Colors[ImGuiCol_Button] = ImVec4(0.3f, 0.3f, 0.3f, 1.0f);
@@ -67,6 +53,26 @@ int main() {
         style.Colors[ImGuiCol_Header] = ImVec4(0.15f, 0.15f, 0.15f, 1.0f);
         style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.2f, 0.2f, 0.2f, 1.0f);
         style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.3f, 0.3f, 0.3f, 1.0f);
+        style.Colors[ImGuiCol_CheckMark] = ImVec4(0.8f, 0.8f, 0.8f, 1.0f);
+
+        int mazeWidth = 31;
+        int mazeHeight = 31;
+        float mazeExpandTimer = -3.0f;
+        float expansionSpeed = 0.02f; 
+        float prevExpansionSpeed = 0.02f;
+        bool paused = false;
+
+        float sunPosX = 0.1f;
+        float sunPosY = 1.0f;
+        float sunPosZ = 0.1f;    
+        glm::vec3 objectColor = glm::vec3(1.000f, 1.000f, 1.000f);
+        glm::vec3 ambientColor = glm::vec3(0.308f, 0.388f, 0.397f);
+        glm::vec3 lightColor = glm::vec3(0.853f, 0.609f, 0.418f);
+ 
+        float fog_distance = 25.0f;
+        float fog_falloff = 850.0f;
+        glm::vec3 fog_color = ambientColor;
+        bool depthBuffer = false;
             
         #pragma endregion
 
@@ -120,8 +126,21 @@ int main() {
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
+
         glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        framebuffer.bind();
+        glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+        grass.bind(0);
+        
+        glUniformMatrix4fv(glGetUniformLocation(regularShader.getID(), "Model"), 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
+        glUniformMatrix4fv(glGetUniformLocation(regularShader.getID(), "View"), 1, GL_FALSE, glm::value_ptr(camera.get_viewMatrix()));
+        glUniformMatrix4fv(glGetUniformLocation(regularShader.getID(), "Projection"), 1, GL_FALSE, glm::value_ptr(camera.get_projectionMatrix()));
+        
+        feild.draw();
 
         auto corridors = maze.getCorridors();
         for (int i = 0; i < corridors.size(); ++i) {
@@ -129,17 +148,30 @@ int main() {
                 if (corridors[i][j] == '#') {
                     float wallX = (j - maze.getWidth() / 2) * 2.0f;
                     float wallZ = (maze.getHeight() / 2 - i) * 2.0f;
-                    draw(wall, stone.getID(), regularShader.getID(), camera.get_viewMatrix(), camera.get_projectionMatrix(), glm::translate(glm::identity<glm::mat4>(), glm::vec3(wallX, 0, wallZ)));
+                    stone.bind(0);
+                    glUniformMatrix4fv(glGetUniformLocation(regularShader.getID(), "Model"), 1, GL_FALSE, glm::value_ptr(glm::translate(glm::identity<glm::mat4>(), glm::vec3(wallX, 0, wallZ))));
+                    wall.draw();
                     }
                 }
             }
 
-        draw(feild, grass.getID(), regularShader.getID(), camera.get_viewMatrix(), camera.get_projectionMatrix());
+        framebuffer.unbind();
 
-        if (window.input(GLFW_KEY_F)) {
-            draw(quad, grass.getID(), postShader.getID());
-            }
-      
+        glUseProgram(postShader.getID());
+        glUniform1f(glGetUniformLocation(postShader.getID(), "fog_distance"), fog_distance);
+        glUniform1f(glGetUniformLocation(postShader.getID(), "fog_falloff"), fog_falloff);
+        glUniform3fv(glGetUniformLocation(postShader.getID(), "fog_color"), 1, glm::value_ptr(fog_color));
+        glUniform1i(glGetUniformLocation(postShader.getID(), "depthBuffer"), depthBuffer);
+        
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, framebuffer.getColorTexture());
+        glUniform1i(glGetUniformLocation(postShader.getID(), "colorTexture"), 0);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, framebuffer.getDepthTexture());
+        glUniform1i(glGetUniformLocation(postShader.getID(), "depthTexture"), 1);
+
+        quad.draw();
+
         #pragma region Gui 
             
             ImGui_ImplOpenGL3_NewFrame();
@@ -206,31 +238,21 @@ int main() {
                         ImGui::ColorEdit3("Light Color", glm::value_ptr(lightColor));
                         }
 
-                    if (ImGui::CollapsingHeader("Drawing")) {
-                        ImGui::Checkbox("Depth Buffer", &depthBuffer);
-                        ImGui::Checkbox("Color Buffer", &colorBuffer);
-                        }
-
                     if (ImGui::CollapsingHeader("Fog")) {
-                        ImGui::SliderFloat("Distance", &fog_distance, 0.0f, 1.0f);
-                        ImGui::SliderFloat("Falloff", &fog_falloff, 0.0f, 1.0f); 
+                        ImGui::SliderFloat("Distance", &fog_distance, 0.0f, 100.0f);
+                        ImGui::SliderFloat("Falloff", &fog_falloff, 0.0f, 1000.0f);
                         ImGui::ColorEdit3("Color", glm::value_ptr(fog_color));
-
+                        ImGui::Checkbox("Depth Buffer", &depthBuffer);
                         }
 
                 ImGui::End();
             
+
+            glUseProgram(regularShader.getID());
             glUniform3fv(glGetUniformLocation(regularShader.getID(), "lightDirection"), 1, glm::value_ptr(glm::vec3(sunPosX, sunPosY, sunPosZ)));
             glUniform3fv(glGetUniformLocation(regularShader.getID(), "objectColor"), 1, glm::value_ptr(objectColor));
             glUniform3fv(glGetUniformLocation(regularShader.getID(), "ambientColor"), 1, glm::value_ptr(ambientColor));
             glUniform3fv(glGetUniformLocation(regularShader.getID(), "lightColor"), 1, glm::value_ptr(lightColor));
-
-            glUniform1i(glGetUniformLocation(regularShader.getID(), "depthBuffer"), depthBuffer);
-            glUniform1i(glGetUniformLocation(regularShader.getID(), "colorBuffer"), colorBuffer);
-            
-            glUniform1f(glGetUniformLocation(regularShader.getID(), "fog_distance"), fog_distance);
-            glUniform1f(glGetUniformLocation(regularShader.getID(), "fog_falloff"), fog_falloff);
-            glUniform3fv(glGetUniformLocation(regularShader.getID(), "fog_color"), 1, glm::value_ptr(fog_color));
 
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
