@@ -24,7 +24,8 @@ int main() {
     Mesh wall("meshes/cube.obj");
     Mesh feild("meshes/feild.obj");
     Mesh quad("meshes/quad.obj");
-    
+    Mesh sword("meshes/sword.obj");
+
     Maze maze(31, 31, 0.0);
 
     regularShader.bind();
@@ -66,14 +67,27 @@ int main() {
         float sunPosY = 1.0f;
         float sunPosZ = 0.1f;    
         glm::vec3 objectColor = glm::vec3(1.000f, 1.000f, 1.000f);
-        glm::vec3 ambientColor = glm::vec3(0.308f, 0.388f, 0.397f);
+        glm::vec3 ambientColor = glm::vec3(0.251f, 0.316f, 0.324f);
         glm::vec3 lightColor = glm::vec3(0.853f, 0.609f, 0.418f);
  
-        float fog_distance = 25.0f;
-        float fog_falloff = 850.0f;
-        glm::vec3 fog_color = ambientColor;
+        bool fog = true;
+        float fog_distance = 0.2f;
+        float fog_falloff = 0.8f;
+        glm::vec3 fog_color = glm::vec3(0.059f, 0.059f, 0.059f);
+
+        bool blur = false;
+        int blurRadius = 3;
+
+        bool ambientOcclusion = false;
+        bool occlusionBuffer = false;
+        int occlusionRadius = 2;
+        float occlusionThreshold = 0.5f;
+        float occlusionStrength = 1.0f;
+
         bool depthBuffer = false;
-            
+        float exposure = 1.0f;
+        float gamma = 1.0f;
+      
         #pragma endregion
 
     #pragma endregion
@@ -158,10 +172,22 @@ int main() {
         framebuffer.unbind();
 
         glUseProgram(postShader.getID());
+        glUniform1i(glGetUniformLocation(postShader.getID(), "fog"), fog);
         glUniform1f(glGetUniformLocation(postShader.getID(), "fog_distance"), fog_distance);
         glUniform1f(glGetUniformLocation(postShader.getID(), "fog_falloff"), fog_falloff);
         glUniform3fv(glGetUniformLocation(postShader.getID(), "fog_color"), 1, glm::value_ptr(fog_color));
+         
+        glUniform1f(glGetUniformLocation(postShader.getID(), "exposure"), exposure);
+        glUniform1f(glGetUniformLocation(postShader.getID(), "gamma"), gamma);
+        glUniform1i(glGetUniformLocation(postShader.getID(), "blur"), blur);
+        glUniform1i(glGetUniformLocation(postShader.getID(), "blurRadius"), blurRadius);     
         glUniform1i(glGetUniformLocation(postShader.getID(), "depthBuffer"), depthBuffer);
+        glUniform1i(glGetUniformLocation(postShader.getID(), "ambientOcclusion"), ambientOcclusion);
+        glUniform1i(glGetUniformLocation(postShader.getID(), "occlusionBuffer"), occlusionBuffer);
+        glUniform1i(glGetUniformLocation(postShader.getID(), "occlusionRadius"), occlusionRadius);
+        glUniform1f(glGetUniformLocation(postShader.getID(), "occlusionThreshold"), occlusionThreshold);
+        glUniform1f(glGetUniformLocation(postShader.getID(), "occlusionStrength"), occlusionStrength);
+
         
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, framebuffer.getColorTexture());
@@ -238,11 +264,31 @@ int main() {
                         ImGui::ColorEdit3("Light Color", glm::value_ptr(lightColor));
                         }
 
-                    if (ImGui::CollapsingHeader("Fog")) {
-                        ImGui::SliderFloat("Distance", &fog_distance, 0.0f, 100.0f);
-                        ImGui::SliderFloat("Falloff", &fog_falloff, 0.0f, 1000.0f);
-                        ImGui::ColorEdit3("Color", glm::value_ptr(fog_color));
+
+                    if (ImGui::CollapsingHeader("Post Shader")) {
                         ImGui::Checkbox("Depth Buffer", &depthBuffer);
+                        ImGui::SliderFloat("Exposure", &exposure, 0.0f, 10.0f);
+                        ImGui::SliderFloat("Gamma", &gamma, 0.0f, 10.0f);
+
+                        ImGui::Checkbox("Fog", &fog);
+                        if (fog) { 
+                            ImGui::SliderFloat("Distance", &fog_distance, 0.0f, 1.0f); 
+                            ImGui::SliderFloat("Falloff", &fog_falloff, 0.0f, 1.0f);
+                            ImGui::ColorEdit3("Color", glm::value_ptr(fog_color));
+                            }
+                        
+                        ImGui::Checkbox("Blur", &blur);
+                        if (blur) { 
+                            ImGui::SliderInt("Blur Radius", &blurRadius, 1, 10); 
+                            }
+
+                        ImGui::Checkbox("Ambient Occlusion", &ambientOcclusion);
+                        if (ambientOcclusion) { 
+                            ImGui::Checkbox("Occlusion Buffer", &occlusionBuffer);
+                            ImGui::SliderInt("Radius", &occlusionRadius, 1, 10); 
+                            ImGui::SliderFloat("Threshold", &occlusionThreshold, 0.0f, 1.0f);
+                            ImGui::SliderFloat("Strength", &occlusionStrength, 0.0f, 100.0f);
+                            }
                         }
 
                 ImGui::End();
