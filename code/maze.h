@@ -30,26 +30,37 @@ struct Maze {
         updateTextureFromCorridors();
         }
  
-    void updateTextureFromCorridors() {
+    void updateTextureFromCorridors(int xoffset = 0, int yoffset = 0, int width = -1, int height = -1) {
         std::vector<unsigned char> textureData;
 
-        for (int y = 0; y < width; ++y) {
-            for (int x = 0; x < height; ++x) {
-                // Use a checkerboard pattern for the texture
-                if ((x + y) % 2 == 0) {
-                    textureData.push_back(255); // Red component for white
-                    textureData.push_back(255); // Green component for white
-                    textureData.push_back(255); // Blue component for white
+        // Determine the range of cells to update based on the provided parameters
+        int endX = (width == -1) ? this->width : std::min(xoffset + width, this->width);
+        int endY = (height == -1) ? this->height : std::min(yoffset + height, this->height);
+
+        for (int y = yoffset; y < endY; ++y) {
+            for (int x = xoffset; x < endX; ++x) {
+                if (corridors[x][y] == '#') {
+                    textureData.push_back(255); 
+                    textureData.push_back(255); 
+                    textureData.push_back(255); 
                 } else {
-                    textureData.push_back(0);   // Red component for black
-                    textureData.push_back(0);   // Green component for black
-                    textureData.push_back(0);   // Blue component for black
+                    textureData.push_back(0);   
+                    textureData.push_back(0);   
+                    textureData.push_back(0);  
                 }
             }
         }
 
-        texture.updateTexture(textureData);
+        texture.updateTexture(textureData, xoffset, yoffset, width, height);
     }
+
+    void reset() {
+        corridors.clear();
+        corridors.resize(width, std::vector<char>(height, '#'));
+        cells_to_expand = std::stack<std::pair<int, int>>();
+        expandTimer = 0.0f;
+        updateTextureFromCorridors();
+        }
 
     void expand() {
         
@@ -69,13 +80,16 @@ struct Maze {
             int ny = cell.second + dir.dy * 2;
             if (nx >= 0 && ny >= 0 && nx < width && ny < height && corridors[nx][ny] == '#') {
                 corridors[cell.first + dir.dx][cell.second + dir.dy] = ' ';
+                updateTextureFromCorridors(cell.first + dir.dx, cell.second + dir.dy, 1, 1);
                 corridors[nx][ny] = ' ';
+                updateTextureFromCorridors(nx, ny, 1, 1);
                 cells_to_expand.push({nx, ny});
                 return;
                 
                 }
             }
         corridors[cell.first][cell.second] = ' ';
+        updateTextureFromCorridors(cell.first, cell.second, 1, 1);
         cells_to_expand.pop();
 
         }

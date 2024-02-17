@@ -27,7 +27,7 @@ int main() {
     Mesh quad("meshes/quad.obj");
     Mesh sword("meshes/sword.obj");
 
-    Maze maze(16, 16, 0.0);
+    Maze maze(64, 64, 0.0);
 
     regularShader.bind();
 
@@ -242,10 +242,11 @@ int main() {
                         }
 
                     if (ImGui::CollapsingHeader("Maze")) {
-                        ImGui::SliderInt("Width", &maze.width, 1, 5000);
-                        ImGui::SliderInt("Height", &maze.height, 1, 5000);
+                        ImGui::SliderInt("Width", &maze.width, 1, 512);
+                        ImGui::SliderInt("Height", &maze.height, 1, 512);
                         ImGui::SliderFloat("Speed", &expansionSpeed, 0.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
                         if (ImGui::Button("Reset")) {
+                            maze.reset();
                             paused = true;
                             }
                         ImGui::SameLine();

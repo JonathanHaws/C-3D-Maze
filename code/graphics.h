@@ -150,32 +150,30 @@ struct Texture {
     }
 
     void resize(int newWidth, int newHeight) {
-        // Update width and height
         width = newWidth;
         height = newHeight;
-
-        // Resize image data
-        int dataSize = width * height * 3; // 3 channels for RGB
+        int dataSize = width * height * 3; 
         imageData.resize(dataSize);
-
-        // Update buffer with the new image data
-        updateBuffer();
+        updateBuffer(false);
+        //printImageData();
         }
 
     void updateTexture(std::vector<unsigned char> newImageData, int xoffset = 0, int yoffset = 0, int subWidth = -1, int subHeight = -1) {
-        // if (newImageData.empty()) {
-        //     std::cerr << "Error: New image data is empty." << std::endl;
-        //     return;
-        //     }
-
-        // int defaultSubWidth = subWidth == -1 ? width : subWidth;
-        // int defaultSubHeight = subHeight == -1 ? height : subHeight;
-
-        imageData = newImageData;
-        updateBuffer(false);
-        //printImageData();
-        
+        if (newImageData.empty()) {
+            std::cerr << "Error: New image data is empty." << std::endl;
+            return;
         }
+
+        int defaultSubWidth = (subWidth == -1) ? width : subWidth;
+        int defaultSubHeight = (subHeight == -1) ? height : subHeight;
+
+        int targetWidth = std::min(defaultSubWidth, width - xoffset);
+        int targetHeight = std::min(defaultSubHeight, height - yoffset);
+
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, xoffset, yoffset, targetWidth, targetHeight, GL_BGR, GL_UNSIGNED_BYTE, newImageData.data());
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
 
     void bind(unsigned int texture_unit) const {
         glActiveTexture(GL_TEXTURE0 + texture_unit);
