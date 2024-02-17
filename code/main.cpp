@@ -17,6 +17,7 @@ int main() {
 
     Shader regularShader("shaders/regular_v.glsl", "shaders/regular_f.glsl");
     Shader postShader("shaders/post_v.glsl", "shaders/post_f.glsl");
+    Shader mazeShader("shaders/maze_v.glsl", "shaders/maze_f.glsl");
 
     Texture grass("textures/grass.bmp");
     Texture stone("textures/stone.bmp");
@@ -26,7 +27,7 @@ int main() {
     Mesh quad("meshes/quad.obj");
     Mesh sword("meshes/sword.obj");
 
-    Maze maze(31, 31, 0.0);
+    Maze maze(16, 16, 0.0);
 
     regularShader.bind();
 
@@ -156,18 +157,31 @@ int main() {
         
         feild.draw();
 
-        auto corridors = maze.getCorridors();
-        for (int i = 0; i < corridors.size(); ++i) {
-            for (int j = 0; j < corridors[i].size(); ++j) {
-                if (corridors[i][j] == '#') {
-                    float wallX = (j - maze.getWidth() / 2) * 2.0f;
-                    float wallZ = (maze.getHeight() / 2 - i) * 2.0f;
-                    stone.bind(0);
-                    glUniformMatrix4fv(glGetUniformLocation(regularShader.getID(), "Model"), 1, GL_FALSE, glm::value_ptr(glm::translate(glm::identity<glm::mat4>(), glm::vec3(wallX, 0, wallZ))));
-                    wall.draw();
-                    }
-                }
-            }
+        GLuint modelUniformLocation = glGetUniformLocation(mazeShader.getID(), "Model");
+        glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(20.0f));
+        glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 50.0f, 0.0f));
+        glm::mat4 transformMatrix = translationMatrix * scaleMatrix;
+        glUniformMatrix4fv(modelUniformLocation, 1, GL_FALSE, glm::value_ptr(transformMatrix));
+
+        maze.texture.bind(0);
+        glUniform1i(glGetUniformLocation(postShader.getID(), "texture_diffuse1"), 0);
+        quad.draw();
+
+        stone.bind(0);
+        mazeShader.bind();
+        glUniformMatrix4fv(glGetUniformLocation(mazeShader.getID(), "Model"), 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
+        glUniformMatrix4fv(glGetUniformLocation(mazeShader.getID(), "View"), 1, GL_FALSE, glm::value_ptr(camera.get_viewMatrix()));
+        glUniformMatrix4fv(glGetUniformLocation(mazeShader.getID(), "Projection"), 1, GL_FALSE, glm::value_ptr(camera.get_projectionMatrix()));
+
+        glUniform3fv(glGetUniformLocation(mazeShader.getID(), "lightDirection"), 1, glm::value_ptr(glm::vec3(sunPosX, sunPosY, sunPosZ)));
+        glUniform3fv(glGetUniformLocation(mazeShader.getID(), "objectColor"), 1, glm::value_ptr(objectColor));
+        glUniform3fv(glGetUniformLocation(mazeShader.getID(), "ambientColor"), 1, glm::value_ptr(ambientColor));
+        glUniform3fv(glGetUniformLocation(mazeShader.getID(), "lightColor"), 1, glm::value_ptr(lightColor));
+
+        //glUniform1i(glGetUniformLocation(mazeShader.getID(), "mazeWidth"), maze.width);
+        //glUniform1i(glGetUniformLocation(mazeShader.getID(), "mazeHeight"), maze.height);
+        maze.draw();
+        mazeShader.unbind();
 
         framebuffer.unbind();
 
@@ -188,7 +202,6 @@ int main() {
         glUniform1f(glGetUniformLocation(postShader.getID(), "occlusionThreshold"), occlusionThreshold);
         glUniform1f(glGetUniformLocation(postShader.getID(), "occlusionStrength"), occlusionStrength);
 
-        
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, framebuffer.getColorTexture());
         glUniform1i(glGetUniformLocation(postShader.getID(), "colorTexture"), 0);
@@ -229,11 +242,10 @@ int main() {
                         }
 
                     if (ImGui::CollapsingHeader("Maze")) {
-                        ImGui::SliderInt("Width", &mazeWidth, 1, 400);
-                        ImGui::SliderInt("Height", &mazeHeight, 1, 400);
+                        ImGui::SliderInt("Width", &maze.width, 1, 5000);
+                        ImGui::SliderInt("Height", &maze.height, 1, 5000);
                         ImGui::SliderFloat("Speed", &expansionSpeed, 0.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
                         if (ImGui::Button("Reset")) {
-                            maze = Maze(mazeWidth, mazeHeight, expansionSpeed); 
                             paused = true;
                             }
                         ImGui::SameLine();

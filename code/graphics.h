@@ -14,19 +14,17 @@ void clear_gl_errors() {
     }
     
 void check_gl_errors() {
-    GLenum err;
-    while ((err = glGetError()) != GL_NO_ERROR) {
-        std::cerr << "OpenGL Error: " << err << std::endl;
-        }
-    }
-void check_gl_version() {
     const GLubyte* version = glGetString(GL_VERSION);
     if (version) {
         std::cout << "OpenGL Version: " << version << std::endl;
     } else {
         std::cerr << "Failed to retrieve OpenGL version." << std::endl;
     }
-}
+    GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cerr << "OpenGL Error: " << err << std::endl;
+        }
+    }
 
 class Shader {
     public:
@@ -107,55 +105,24 @@ class Shader {
         }
     };
 
-class Texture { 
-private:
+struct Texture { 
+
     int width = 0; 
     int height = 0;
-    unsigned int textureID = 0; // Texture ID
+    unsigned int textureID = 0;
     std::vector<unsigned char> imageData;
 
-public:
-
-    Texture(const std::string& filepath) {
-
-        // Load image data from bitmap file
-        std::ifstream file(filepath, std::ios::binary);
-        if (!file.is_open()) {
-            std::cerr << "Error: Unable to open file: " << filepath << std::endl;
-            return;
-            }
-        file.seekg(18);
-        file.read(reinterpret_cast<char*>(&width), sizeof(width));
-        file.read(reinterpret_cast<char*>(&height), sizeof(height));
-        if (width <= 0 || height <= 0) {
-            std::cerr << "Error: Invalid image dimensions in file: " << filepath << std::endl;
-            return;
-            }
-        size_t imageSize = width * height * 3;
-        imageData.resize(imageSize);
-        file.seekg(54);
-        file.read(reinterpret_cast<char*>(imageData.data()), imageSize);
-        if (imageData.empty()) {
-            std::cerr << "Error: Failed to read image data from file: " << filepath << std::endl;
-            return;
-            }
-
+    Texture(int width, int height) : width(width), height(height) {
         glGenTextures(1, &textureID);
-        glBindTexture(GL_TEXTURE_2D, textureID);
+        int dataSize = width * height * 3; // 3 channels for RGB
+        imageData.resize(dataSize); 
+        updateBuffer(false);
+        }
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-        //Gives error but works fine need to find a way to do error checking with glew extensions     
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, imageData.data());
-
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        glBindTexture(GL_TEXTURE_2D, 0);    
-
+    Texture(const std::string& filepath, bool mipmaps = true) {
+        loadFromBitmapFile(filepath);
+        glGenTextures(1, &textureID);
+        updateBuffer(mipmaps);   
         }
 
     ~Texture() {
@@ -165,12 +132,49 @@ public:
             }
         }
 
-    void printImageData() const {
-        std::cout << "Image Data:" << std::endl;
-        for (size_t i = 0; i < imageData.size(); ++i) {
-            std::cout << static_cast<int>(imageData[i]) << " ";
+    void updateBuffer(bool mipmaps = false) {
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR, GL_UNSIGNED_BYTE, imageData.data());
+        if (mipmaps) {
+            //clear_gl_errors();
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST); // Causing errors but glew extension fixing?
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+            glGenerateMipmap(GL_TEXTURE_2D);
+            //check_gl_errors();
             }
-        std::cout << std::endl;
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    void resize(int newWidth, int newHeight) {
+        // Update width and height
+        width = newWidth;
+        height = newHeight;
+
+        // Resize image data
+        int dataSize = width * height * 3; // 3 channels for RGB
+        imageData.resize(dataSize);
+
+        // Update buffer with the new image data
+        updateBuffer();
+        }
+
+    void updateTexture(std::vector<unsigned char> newImageData, int xoffset = 0, int yoffset = 0, int subWidth = -1, int subHeight = -1) {
+        // if (newImageData.empty()) {
+        //     std::cerr << "Error: New image data is empty." << std::endl;
+        //     return;
+        //     }
+
+        // int defaultSubWidth = subWidth == -1 ? width : subWidth;
+        // int defaultSubHeight = subHeight == -1 ? height : subHeight;
+
+        imageData = newImageData;
+        updateBuffer(false);
+        //printImageData();
+        
         }
 
     void bind(unsigned int texture_unit) const {
@@ -178,175 +182,227 @@ public:
         glBindTexture(GL_TEXTURE_2D, textureID);
         }
 
-    int getWidth() const { return width; }
-    int getHeight() const { return height; }
-    unsigned int getID() const { return textureID; }
-    const std::vector<unsigned char>& getImageData() const { return imageData; }
-};
+    void loadFromBitmapFile(const std::string& filepath) {
+        std::ifstream file(filepath, std::ios::binary);
+        if (!file.is_open()) {
+            std::cerr << "Error: Unable to open file: " << filepath << std::endl;
+            return;
+            }
 
-class Mesh {
+        file.seekg(18);
+        file.read(reinterpret_cast<char*>(&width), sizeof(width));
+        file.read(reinterpret_cast<char*>(&height), sizeof(height));
+        if (width <= 0 || height <= 0) {
+            std::cerr << "Error: Invalid image dimensions in file: " << filepath << std::endl;
+            return;
+            }
+
+        size_t imageSize = width * height * 3;
+        imageData.resize(imageSize);
+        file.seekg(54);
+        file.read(reinterpret_cast<char*>(imageData.data()), imageSize);
+        if (imageData.empty()) {
+            std::cerr << "Error: Failed to read image data from file: " << filepath << std::endl;
+            return;
+            }
+
+        }
+
+    void printImageData() {
+        std::cout << "Image Data:" << std::endl;
+        std::stringstream ss;
+        for (size_t i = 0; i < imageData.size(); ++i) {
+            ss << static_cast<int>(imageData[i]) << " ";
+        }
+        std::cout << ss.str() << std::endl;
+    }
+
+    };
+
+struct Mesh {
     
-    public:
-        
-        Mesh(const std::string& filePath) : position(0.0f), rotation(0.0f), scale(1.0f) {
-            if (!loadOBJ(filePath)) {
-                throw std::runtime_error("Failed to load OBJ file: " + filePath);
-                }
-            loadBuffers();
-            }   
-        
-        ~Mesh() { 
-            glDeleteVertexArrays(1, &VAO);
-            glDeleteBuffers(1, &VBO);
-            glDeleteBuffers(1, &EBO);
+    struct Vertex { float x, y, z, u, v, nx, ny, nz; };
+    struct Triangle { unsigned int a, b, c; };
+    std::vector<Vertex> vertices;
+    std::vector<Triangle> triangles;
+    unsigned int VAO, VBO, EBO;
+
+    Mesh(const std::string& filePath = "") {
+        if (!filePath.empty()) {
+            if (!loadOBJ(filePath)) { 
+                throw std::runtime_error("Failed to load OBJ file: " + filePath); 
             }
-        unsigned int getVAO() const { return VAO; }
-        unsigned int getVBO() const { return VBO; }
-        unsigned int getEBO() const { return EBO; }
-        int getVertexCount() const { return vertices.size(); }
+        }
+        loadBuffers();
+    }
+    
+    ~Mesh() { 
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteBuffers(1, &VBO);
+        glDeleteBuffers(1, &EBO);
+        }
 
-        void draw() {
-            glBindVertexArray(VAO);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-            // glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), position) *
-            //     glm::rotate(glm::mat4(1.0f), glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f)) *
-            //     glm::rotate(glm::mat4(1.0f), glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f)) *
-            //     glm::rotate(glm::mat4(1.0f), glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f)) *
-            //     glm::scale(glm::mat4(1.0f), scale);
-            //glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "Model"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-                
-            glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
-            }
-
-    private:
+    void draw(int numInstances = 10) {
+        glBindVertexArray(VAO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         
+        if (numInstances == 1) {
+            glDrawElements(GL_TRIANGLES, vertices.size(), GL_UNSIGNED_INT, 0);  
+        } else {
+            glDrawElementsInstanced(GL_TRIANGLES, vertices.size(), GL_UNSIGNED_INT, 0, numInstances);
+        }
+    }
+    
+    auto get_flattened_vertices() {
+    std::vector<float> flattenedVertices;
+    for (const auto& vertex : vertices) {
+        flattenedVertices.push_back(vertex.x);
+        flattenedVertices.push_back(vertex.y);
+        flattenedVertices.push_back(vertex.z);
+        flattenedVertices.push_back(vertex.u);
+        flattenedVertices.push_back(vertex.v);
+        flattenedVertices.push_back(vertex.nx);
+        flattenedVertices.push_back(vertex.ny);
+        flattenedVertices.push_back(vertex.nz);
+        }
+    return flattenedVertices;
+    }
 
-        bool loadOBJ(const std::string& filePath) { // TODO: make more efficent by removing duplicate vertices
-            std::ifstream file(filePath);
-            if (!file.is_open()) { throw std::runtime_error("Failed to open OBJ file: " + filePath);}
-
-            struct TempVertex { float x, y, z; };
-            struct TempUV { float u, v; };
-            struct TempNormal { float nx, ny, nz; };
-            std::vector<TempVertex> tempVertices;
-            std::vector<TempUV> tempUVs;
-            std::vector<TempNormal> tempNormals;
-
-            std::string line;
-            while (std::getline(file, line)) {
-                std::istringstream iss(line);
-                std::string type;
-                iss >> type;
-                if (type == "v") {
-                    TempVertex tempVertex;
-                    iss >> tempVertex.x >> tempVertex.y >> tempVertex.z;
-                    tempVertices.push_back(tempVertex);
-                } else if (type == "vt") {
-                    TempUV tempUV;
-                    iss >> tempUV.u >> tempUV.v;
-                    tempUVs.push_back(tempUV);
-                } else if (type == "vn") {
-                    TempNormal tempNormal;
-                    iss >> tempNormal.nx >> tempNormal.ny >> tempNormal.nz;
-                    tempNormals.push_back(tempNormal);
-                } else if (type == "f") {
-                    char slash;
-                    Vertex vertex;
-                    
-                    for (int i = 0; i < 3; ++i) {
-                        unsigned int vertexIndex, uvIndex, normalIndex;
-                        iss >> vertexIndex >> slash >> uvIndex >> slash >> normalIndex;
-                        vertex.x = tempVertices[vertexIndex - 1].x;
-                        vertex.y = tempVertices[vertexIndex - 1].y;
-                        vertex.z = tempVertices[vertexIndex - 1].z;
-                        vertex.u = tempUVs[uvIndex - 1].u;
-                        vertex.v = tempUVs[uvIndex - 1].v;
-                        vertex.nx = tempNormals[normalIndex - 1].nx;
-                        vertex.ny = tempNormals[normalIndex - 1].ny;
-                        vertex.nz = tempNormals[normalIndex - 1].nz;
-                        vertices.push_back(vertex);
-                        }
-
-                    Index index;
-                    index.v3 = vertices.size() -1;
-                    index.v2 = vertices.size() - 2;
-                    index.v1 = vertices.size() - 3;
-                    indices.push_back(index);
-                    
-                    }
-                }
-
-            #pragma region debug output
-                // for (const auto& vertex : vertices) {
-                //     std::cout << "Vertex: (" << vertex.x << ", " << vertex.y << ", " << vertex.z << "), "
-                //             << "UV: (" << vertex.u << ", " << vertex.v << "), "
-                //             << "Normal: (" << vertex.nx << ", " << vertex.ny << ", " << vertex.nz << ")" << std::endl;
-                //     }
-
-                // std::cout << "Indices: " << std::endl;
-                //     for (size_t i = 0; i < indices.size(); ++i) {
-                //         std::cout << "    (" << indices[i].v1 << ", " << indices[i].v2 << ", " << indices[i].v3 << ")" << std::endl;
-                //         }
-                    #pragma endregion
-
-            return true;
+    auto get_flattened_triangles() {
+        std::vector<unsigned int> flattenedTriangles;
+        for (const auto& triangle : triangles) {
+            flattenedTriangles.push_back(triangle.a);
+            flattenedTriangles.push_back(triangle.b);
+            flattenedTriangles.push_back(triangle.c);
             }
+        return flattenedTriangles;
+        }
 
-        void loadBuffers() {
-            glGenVertexArrays(1, &VAO);
-            glGenBuffers(1, &VBO);
-            glGenBuffers(1, &EBO);
+    void add(const std::vector<Vertex>& new_vertices, const std::vector<Triangle>& new_triangles, float x = 0, float y = 0, float z = 0) {
 
-            glBindVertexArray(VAO);
+        for (const auto& new_vertex : new_vertices) {
 
-            std::vector<float> flattenedVertices;
-            for (const auto& vertex : vertices) {
-                flattenedVertices.push_back(vertex.x);
-                flattenedVertices.push_back(vertex.y);
-                flattenedVertices.push_back(vertex.z);
-                flattenedVertices.push_back(vertex.u);
-                flattenedVertices.push_back(vertex.v);
-                flattenedVertices.push_back(vertex.nx);
-                flattenedVertices.push_back(vertex.ny);
-                flattenedVertices.push_back(vertex.nz);
-                }
-            glBindBuffer(GL_ARRAY_BUFFER, VBO);
-            glBufferData(GL_ARRAY_BUFFER, flattenedVertices.size() * sizeof(float), flattenedVertices.data(), GL_STATIC_DRAW);
-
-            std::vector<unsigned int> flattenedIndices;
-            for (const auto& index : indices) {
-                flattenedIndices.push_back(index.v1);
-                flattenedIndices.push_back(index.v2);
-                flattenedIndices.push_back(index.v3);
-                }
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, flattenedIndices.size() * sizeof(unsigned int), flattenedIndices.data(), GL_STATIC_DRAW);
-
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // Specify position floats
-            glEnableVertexAttribArray(0);
-            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))); // Specify uv coordinates
-            glEnableVertexAttribArray(1);
-            glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float))); // Specify in normal vector
-            glEnableVertexAttribArray(2);
-
-            glBindVertexArray(0);
+            vertices.push_back(new_vertex);
+            vertices.back().x += x;
+            vertices.back().y += y;
+            vertices.back().z += z;
+            }
             
+        int offset = vertices.size() - new_vertices.size();
+        for (const auto& new_triangle : new_triangles) {    
+                Triangle newTriangle;
+                newTriangle.a = new_triangle.a + offset;
+                newTriangle.b = new_triangle.b + offset;
+                newTriangle.c = new_triangle.c + offset;
+                triangles.push_back(newTriangle);
+            }
+                
+        }
+
+    bool loadOBJ(const std::string& filePath) { // TODO: make more efficent by removing duplicate vertices
+        std::ifstream file(filePath);
+        if (!file.is_open()) { throw std::runtime_error("Failed to open OBJ file: " + filePath);}
+
+        struct TempVertex { float x, y, z; };
+        struct TempUV { float u, v; };
+        struct TempNormal { float nx, ny, nz; };
+        std::vector<TempVertex> tempVertices;
+        std::vector<TempUV> tempUVs;
+        std::vector<TempNormal> tempNormals;
+
+        std::string line;
+        while (std::getline(file, line)) {
+            std::istringstream iss(line);
+            std::string type;
+            iss >> type;
+            if (type == "v") {
+                TempVertex tempVertex;
+                iss >> tempVertex.x >> tempVertex.y >> tempVertex.z;
+                tempVertices.push_back(tempVertex);
+            } else if (type == "vt") {
+                TempUV tempUV;
+                iss >> tempUV.u >> tempUV.v;
+                tempUVs.push_back(tempUV);
+            } else if (type == "vn") {
+                TempNormal tempNormal;
+                iss >> tempNormal.nx >> tempNormal.ny >> tempNormal.nz;
+                tempNormals.push_back(tempNormal);
+            } else if (type == "f") {
+                char slash;
+                Vertex vertex;
+                
+                for (int i = 0; i < 3; ++i) {
+                    unsigned int vertexIndex, uvIndex, normalIndex;
+                    iss >> vertexIndex >> slash >> uvIndex >> slash >> normalIndex;
+                    vertex.x = tempVertices[vertexIndex - 1].x;
+                    vertex.y = tempVertices[vertexIndex - 1].y;
+                    vertex.z = tempVertices[vertexIndex - 1].z;
+                    vertex.u = tempUVs[uvIndex - 1].u;
+                    vertex.v = tempUVs[uvIndex - 1].v;
+                    vertex.nx = tempNormals[normalIndex - 1].nx;
+                    vertex.ny = tempNormals[normalIndex - 1].ny;
+                    vertex.nz = tempNormals[normalIndex - 1].nz;
+                    vertices.push_back(vertex);
+                    }
+
+                Triangle triangle;
+                triangle.a = vertices.size() -1;
+                triangle.b = vertices.size() - 2;
+                triangle.c = vertices.size() - 3;
+                triangles.push_back(triangle);
+                
+                }
             }
 
-        struct Vertex {
-            float x, y, z, u, v, nx, ny, nz;
-            };
-        struct Index {
-            unsigned int v1, v2, v3;
-            };
-        std::vector<Vertex> vertices;
-        std::vector<Index> indices;
-        unsigned int VAO, VBO, EBO;
-        glm::vec3 position;
-        glm::vec3 rotation;
-        glm::vec3 scale;
-        glm::mat4 modelMatrix;
+        #pragma region debug output
+            // for (const auto& vertex : vertices) {
+            //     std::cout << "Vertex: (" << vertex.x << ", " << vertex.y << ", " << vertex.z << "), "
+            //             << "UV: (" << vertex.u << ", " << vertex.v << "), "
+            //             << "Normal: (" << vertex.nx << ", " << vertex.ny << ", " << vertex.nz << ")" << std::endl;
+            //     }
+
+            // std::cout << "Indices: " << std::endl;
+            //     for (size_t i = 0; i < indices.size(); ++i) {
+            //         std::cout << "    (" << indices[i].v1 << ", " << indices[i].v2 << ", " << indices[i].v3 << ")" << std::endl;
+            //         }
+                #pragma endregion
+
+        return true;
+        }
+
+    void loadBuffers() {
+
+        glGenVertexArrays(1, &VAO);
+        glGenBuffers(1, &VBO);
+        glGenBuffers(1, &EBO);
+
+        glBindVertexArray(VAO);
+
+        updateBuffers();
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // Specify position floats
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))); // Specify uv coordinates
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float))); // Specify in normal vector
+        glEnableVertexAttribArray(2);
+
+        glBindVertexArray(0);
         
+        }     
+
+    void updateBuffers() {
+        glBindVertexArray(VAO);
+        
+        std::vector<float> flattenedVertices = get_flattened_vertices();
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, flattenedVertices.size() * sizeof(float), flattenedVertices.data(), GL_STATIC_DRAW);
+
+        std::vector<unsigned int> flattenedTriangles = get_flattened_triangles();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, flattenedTriangles.size() * sizeof(unsigned int), flattenedTriangles.data(), GL_STATIC_DRAW);
+        }
+
     };
 
 class Camera {
@@ -394,74 +450,66 @@ class Camera {
         glm::vec3 target;
         glm::vec3 up;
         };
+
 class Framebuffer {
-public:
-    Framebuffer(int width, int height) : m_width(width), m_height(height) {
-        // Create framebuffer object
-        glGenFramebuffers(1, &m_fbo);
-        glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+    public:
+        Framebuffer(int width, int height) : m_width(width), m_height(height) {
+            // Create framebuffer object
+            glGenFramebuffers(1, &m_fbo);
+            glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 
-        // Create color texture attachment
-        glGenTextures(1, &m_color_texture);
-        glBindTexture(GL_TEXTURE_2D, m_color_texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_color_texture, 0);
+            // Create color texture attachment
+            glGenTextures(1, &m_color_texture);
+            glBindTexture(GL_TEXTURE_2D, m_color_texture);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_color_texture, 0);
 
-         // Create depth texture attachment
-        glGenTextures(1, &m_depth_texture);
-        glBindTexture(GL_TEXTURE_2D, m_depth_texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth_texture, 0);
+            // Create depth texture attachment
+            glGenTextures(1, &m_depth_texture);
+            glBindTexture(GL_TEXTURE_2D, m_depth_texture);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth_texture, 0);
 
-        // Check framebuffer completeness
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-            std::cerr << "Framebuffer is not complete!" << std::endl;
+            // Check framebuffer completeness
+            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+                std::cerr << "Framebuffer is not complete!" << std::endl;
+            }
+
+            // Unbind framebuffer
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
 
-        // Unbind framebuffer
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
+        ~Framebuffer() {
+            // Delete framebuffer and texture
+            glDeleteFramebuffers(1, &m_fbo);
+            glDeleteTextures(1, &m_color_texture);
+            glDeleteTextures(1, &m_depth_texture);
+        }
 
-    ~Framebuffer() {
-        // Delete framebuffer and texture
-        glDeleteFramebuffers(1, &m_fbo);
-        glDeleteTextures(1, &m_color_texture);
-        glDeleteTextures(1, &m_depth_texture);
-    }
+        void bind() {
+            glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+        }
 
-    void bind() {
-        glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-    }
+        void unbind() {
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
 
-    void unbind() {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
+        GLuint getColorTexture() const {
+            return m_color_texture;
+        }
 
-    GLuint getColorTexture() const {
-        return m_color_texture;
-    }
+        GLuint getDepthTexture() const {
+            return m_depth_texture;
+        }
 
-    GLuint getDepthTexture() const {
-        return m_depth_texture;
-    }
-
-private:
-    GLuint m_fbo;
-    GLuint m_color_texture;
-    GLuint m_depth_texture;
-    int m_width;
-    int m_height;
-};
-
-void draw(Mesh& mesh,
-    const glm::mat4& view = glm::mat4(1.0f), 
-    const glm::mat4& projection = glm::mat4(1.0f), 
-    const glm::mat4& model = glm::mat4(1.0f)) {
-
-
-    mesh.draw();
-    }
+    private:
+        GLuint m_fbo;
+        GLuint m_color_texture;
+        GLuint m_depth_texture;
+        int m_width;
+        int m_height;
+    };
