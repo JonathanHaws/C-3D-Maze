@@ -23,7 +23,6 @@ struct Maze {
         width(width),
         height(height),
         expandSpeed(expandSpeed),
-        //texture("textures/grass.bmp"),
         texture(width, height),
         wall("meshes/cube.obj") {
         corridors.resize(width, std::vector<char>(height, '#'));
@@ -34,8 +33,8 @@ struct Maze {
         std::vector<unsigned char> textureData;
 
         //Determine the range of cells to update based on the provided parameters
-        int endX = (width == -1) ? this->width : std::min(xoffset + width, this->width);
-        int endY = (height == -1) ? this->height : std::min(yoffset + height, this->height);
+        int endX = (width == -1) ? this->width : ((xoffset + width < this->width) ? (xoffset + width) : this->width);
+        int endY = (height == -1) ? this->height : ((yoffset + height < this->height) ? (yoffset + height) : this->height);
 
         for (int y = yoffset; y < endY; ++y) {
             for (int x = xoffset; x < endX; ++x) {
@@ -55,6 +54,7 @@ struct Maze {
     }
 
     void reset() {
+        
         corridors.clear();
         corridors.resize(width, std::vector<char>(height, '#'));
         cells_to_expand = std::stack<std::pair<int, int>>();

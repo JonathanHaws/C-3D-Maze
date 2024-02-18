@@ -8,8 +8,12 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include <audio.h>
 
 int main() {
+
+    Audio audio;
+    audio.playSound("audio/expand.wav");
 
     Window window(1920, 1080, "Maze", true);
     Camera camera( glm::vec3(0.0f, 20.0f, -40.0f), glm::vec3(0.0f, 0.0f, -20.0f), glm::vec3(0.0f, 1.0f, 0.0f), 80.0f, 1280.0f / 720.0f, 0.1f, 1000.0f ); 
@@ -246,6 +250,7 @@ int main() {
                         ImGui::SliderInt("Height", &maze.height, 1, 2048);
                         ImGui::SliderFloat("Speed", &expansionSpeed, 0.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
                         if (ImGui::Button("Reset")) {
+                            audio.playSound("audio/expand.wav");
                             maze.reset();
                             paused = true;
                             }
@@ -262,6 +267,7 @@ int main() {
                             }
                         ImGui::SameLine();
                         if (ImGui::Button("Expand Once")) {
+                            audio.playSound("audio/expand.wav");
                             maze.expand();
                             mazeExpandTimer = 0.0f; // Reset the timer for maze expansion
                             }
