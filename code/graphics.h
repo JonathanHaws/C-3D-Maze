@@ -112,11 +112,11 @@ struct Texture {
     unsigned int textureID = 0;
     std::vector<unsigned char> imageData;
 
-    Texture(int width, int height) : width(width), height(height) {
+    Texture(int width, int height): 
+        width(width), 
+        height(height) {
         glGenTextures(1, &textureID);
-        int dataSize = width * height * 3; // 3 channels for RGB
-        imageData.resize(dataSize); 
-        updateBuffer(false);
+        resize(width, height);
         }
 
     Texture(const std::string& filepath, bool mipmaps = true) {

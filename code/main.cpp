@@ -242,8 +242,8 @@ int main() {
                         }
 
                     if (ImGui::CollapsingHeader("Maze")) {
-                        ImGui::SliderInt("Width", &maze.width, 1, 512);
-                        ImGui::SliderInt("Height", &maze.height, 1, 512);
+                        ImGui::SliderInt("Width", &maze.width, 1, 2048);
+                        ImGui::SliderInt("Height", &maze.height, 1, 2048);
                         ImGui::SliderFloat("Speed", &expansionSpeed, 0.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
                         if (ImGui::Button("Reset")) {
                             maze.reset();

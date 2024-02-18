@@ -33,7 +33,7 @@ struct Maze {
     void updateTextureFromCorridors(int xoffset = 0, int yoffset = 0, int width = -1, int height = -1) {
         std::vector<unsigned char> textureData;
 
-        // Determine the range of cells to update based on the provided parameters
+        //Determine the range of cells to update based on the provided parameters
         int endX = (width == -1) ? this->width : std::min(xoffset + width, this->width);
         int endY = (height == -1) ? this->height : std::min(yoffset + height, this->height);
 
@@ -63,10 +63,17 @@ struct Maze {
         }
 
     void expand() {
+
+        if (corridors.size() != width || corridors[0].size() != height) { // Avoid acessing out of bounds for cells_to_expand stack and corridors vector
+            texture.resize(width, height);
+            reset();
+            }
+
+        if(width< 3 || height < 3) { return; } // Maze is too small to expand (bandaid fix somewhere else in this function acessing out of bounds I think)
         
-        if (cells_to_expand.empty()) { // Maze is complete or not started
+        if (cells_to_expand.empty()) { 
             if (corridors[1][1] == ' ') { return; } //Maze is complete
-                cells_to_expand.push({1, 1}); // Start
+            cells_to_expand.push({1, 1}); // Maze is not Started
             }
 
         struct Direction { int dx, dy; };
@@ -78,16 +85,19 @@ struct Maze {
         for (const auto& dir : directions) {
             int nx = cell.first + dir.dx * 2;
             int ny = cell.second + dir.dy * 2;
-            if (nx >= 0 && ny >= 0 && nx < width && ny < height && corridors[nx][ny] == '#') {
-                corridors[cell.first + dir.dx][cell.second + dir.dy] = ' ';
-                updateTextureFromCorridors(cell.first + dir.dx, cell.second + dir.dy, 1, 1);
-                corridors[nx][ny] = ' ';
-                updateTextureFromCorridors(nx, ny, 1, 1);
-                cells_to_expand.push({nx, ny});
-                return;
-                
+            if (nx >= 0 && ny >= 0 && nx < width && ny < height ) {
+                if (corridors[nx][ny] == '#') {
+                    corridors[cell.first + dir.dx][cell.second + dir.dy] = ' ';
+                    updateTextureFromCorridors(cell.first + dir.dx, cell.second + dir.dy, 1, 1);
+                    corridors[nx][ny] = ' ';
+                    updateTextureFromCorridors(nx, ny, 1, 1);
+                    cells_to_expand.push({nx, ny});
+                    return;
+                    }
                 }
             }
+        
+        
         corridors[cell.first][cell.second] = ' ';
         updateTextureFromCorridors(cell.first, cell.second, 1, 1);
         cells_to_expand.pop();
@@ -95,6 +105,7 @@ struct Maze {
         }
 
     void tick(float deltaTime) {
+
         expandTimer += deltaTime;
         if (expandTimer > expandSpeed) {
             expand();
@@ -103,11 +114,6 @@ struct Maze {
         }      
 
     void draw() {
-
-        if (texture.width != width || texture.height != height) {
-            texture.resize(width, height);
-            updateTextureFromCorridors(); // Update texture data after resizing
-            }
 
         GLint currentProgram;
         glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
