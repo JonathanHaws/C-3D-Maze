@@ -13,7 +13,9 @@
 int main() {
 
     Audio audio;
-    audio.playSound("audio/expand.wav");
+    //audio.playSound("audio/expand.wav");
+    audio.playSineWave();
+
 
     Window window(1920, 1080, "Maze", true);
     Camera camera( glm::vec3(0.0f, 20.0f, -40.0f), glm::vec3(0.0f, 0.0f, -20.0f), glm::vec3(0.0f, 1.0f, 0.0f), 80.0f, 1280.0f / 720.0f, 0.1f, 1000.0f ); 
@@ -250,7 +252,8 @@ int main() {
                         ImGui::SliderInt("Height", &maze.height, 1, 2048);
                         ImGui::SliderFloat("Speed", &expansionSpeed, 0.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
                         if (ImGui::Button("Reset")) {
-                            audio.playSound("audio/expand.wav");
+                            //audio.playSound("audio/expand.wav");
+                            audio.playSineWave();
                             maze.reset();
                             paused = true;
                             }
