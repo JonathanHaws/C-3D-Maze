@@ -28,7 +28,6 @@ struct Sound {
     }
 };
 
-
 struct Audio {
     HWAVEOUT hWaveOut;
     WAVEFORMATEX waveFormat;
@@ -42,7 +41,7 @@ struct Audio {
 
     Audio() {
         buffer = new BYTE[bufferSize];
-        generateSineWave();
+        generateSawtoothWave();
         initializeWaveFormat();
         initializeWaveHeader();
         initializeWaveOut();
@@ -56,33 +55,41 @@ struct Audio {
     static void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2) {
         if (uMsg == WOM_DONE) {
             Audio* audio = reinterpret_cast<Audio*>(dwInstance);
-            audio->generateSineWave();
+            audio->generateSawtoothWave();
             waveOutPrepareHeader(hwo, &(audio->waveHeader), sizeof(WAVEHDR));
             waveOutWrite(hwo, &(audio->waveHeader), sizeof(WAVEHDR));
         }
     }
 
-    void generateSineWave() {
-    const double amplitude = 32767.0; // Amplitude of the sine wave (maximum value for 16-bit audio)
-    const double twoPi = 2.0 * 3.14159265358979323846;
+    void generateSawtoothWave() {
+        const double amplitude = 500.0; // Adjusted amplitude to make it less loud
+        const double twoPi = 2.0 * 3.14159265358979323846;
 
-    // Define the frequencies for the two sine waves (A4 and E5 for a perfect fifth)
-    const double frequencyA = 440.0; // Frequency of the A4 note
-    const double frequencyE = frequencyA * (3.0 / 2.0); // Frequency of the E5 note (perfect fifth)
+        // Define the frequency of the sawtooth wave
+        const double frequency = 220.0; // Frequency of the sawtooth wave
 
-    for (int i = 0; i < bufferSize / 2; ++i) {
-        double time = static_cast<double>(i) / sampleRate;
+        for (int i = 0; i < bufferSize / 2; ++i) {
+            double time = static_cast<double>(i) / sampleRate;
 
-        // Calculate the values of the two sine waves at the current time
-        double valueA = amplitude * sin(twoPi * frequencyA * time);
-        double valueE = amplitude * sin(twoPi * frequencyE * time);
+            // Calculate the value of the sawtooth wave at the current time
+            double value = 0.0;
+            for (int harmonic = 1; harmonic <= 10; ++harmonic) { // Adding harmonics for a richer sound
+                value += amplitude / harmonic * sin(twoPi * frequency * time * harmonic);
+            }
 
-        // Combine the values of the two sine waves
-        short sample = static_cast<short>((valueA + valueE) / 2.0); // Average the values to avoid clipping
+            // Assign the sample to the buffer (without averaging as it's not needed for a sawtooth wave)
+            short sample = static_cast<short>(value);
 
-        // Assign the combined sample to the buffer
-        buffer[2 * i] = sample & 0xFF; // Lower byte
-        buffer[2 * i + 1] = (sample >> 8) & 0xFF; // Upper byte
+            // Adjust the sample amplitude to fit within the 16-bit range
+            if (sample > 32767) {
+                sample = 32767;
+            } else if (sample < -32768) {
+                sample = -32768;
+            }
+
+            // Assign the sample to the buffer
+            buffer[2 * i] = sample & 0xFF; // Lower byte
+            buffer[2 * i + 1] = (sample >> 8) & 0xFF; // Upper byte
         }
     }
 

@@ -253,7 +253,7 @@ int main() {
                         ImGui::SliderFloat("Speed", &expansionSpeed, 0.0f, 1.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
                         if (ImGui::Button("Reset")) {
                             //audio.playSound("audio/expand.wav");
-                            audio.playSineWave();
+                            //audio.generateSawtoothWave
                             maze.reset();
                             paused = true;
                             }
