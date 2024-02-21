@@ -100,6 +100,8 @@ int main() {
 
     while (window.is_open()) {
 
+        std::cout << "Buffers Played " << audio.buffersPlayed << std::endl;
+
         #pragma region Input
 
             window.poll_events();

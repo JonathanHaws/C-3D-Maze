@@ -18,7 +18,7 @@ struct Sound {
 
     void generate_sine_wave(int seconds, int sampleRate, int frequency) {
         wave.clear(); // Clear any existing wave data
-        const double amplitude = 32767.0; // Amplitude of the sine wave (maximum value for 16-bit audio)
+        const double amplitude = 500.0; // Amplitude of the sine wave (maximum value for 16-bit audio)
         const double twoPi = 2.0 * 3.14159265358979323846;
         int numSamples = seconds * sampleRate; // Calculate the number of samples
         for (int i = 0; i < numSamples; ++i) {
@@ -30,12 +30,8 @@ struct Sound {
         }
     }
 
-    void generate_sine_wave(int seconds) {
-
-    }
-
     Sound() {
-        //generate_sine_wave();
+        generate_sine_wave(1, 44100, 440);
     }
 
     void load_wave_file(const char* path) {
@@ -54,9 +50,13 @@ struct Audio {
     HWAVEOUT hWaveOut;
     WAVEFORMATEX waveFormat;
     WAVEHDR waveHeader;
-    const int bufferSize = 64 * 2 * 16 / 8; // buffer size in bytes
-    BYTE* buffer; // Buffer to store the audio data
 
+    int bufferSamples = 8192;
+    const int bufferSize = bufferSamples * 2 * 16 / 8; // 64 samples, 2 channels, 16 bits per sample, 8 bits per byte
+    int buffersPlayed = 0; 
+    BYTE* buffer; 
+    Sound sound;
+    
     ~Audio() {
         delete[] buffer;
         waveOutClose(hWaveOut);
@@ -79,22 +79,34 @@ struct Audio {
             std::cerr << "Error opening audio device" << std::endl;
         }
         waveOutProc(hWaveOut, WOM_DONE, reinterpret_cast<DWORD_PTR>(this), 0, 0);
+        Sound sound;
+        
     }
-
-
 
     static void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2) {
         if (uMsg == WOM_DONE) {
             Audio* audio = reinterpret_cast<Audio*>(dwInstance);
-            
-            // Fill the buffer with random noise
-            for (int i = 0; i < audio->bufferSize; ++i) {
-                short sample = static_cast<short>(rand() % 65536 - 32768);
-                audio->buffer[i] = sample & 0xFF; // Lower byte
-            }
+            audio->buffersPlayed++;
 
-            waveOutPrepareHeader(hwo, &(audio->waveHeader), sizeof(WAVEHDR));
-            waveOutWrite(hwo, &(audio->waveHeader), sizeof(WAVEHDR));
+            // Calculate the index from which to start copying the sound data
+            int startIndex = (audio->buffersPlayed - 1) * audio->bufferSize;
+
+            // Calculate the remaining samples to be played
+            int remainingSamples = audio->sound.wave.size() - startIndex;
+
+            // Copy sound data into the buffer starting from the calculated index
+            int copySize = (audio->bufferSize < remainingSamples) ? audio->bufferSize : remainingSamples;
+            std::copy(audio->sound.wave.begin() + startIndex,
+                    audio->sound.wave.begin() + startIndex + copySize,
+                    audio->buffer);
+
+            // If there are remaining samples, prepare and write the buffer
+            if (remainingSamples > 0) {
+                waveOutPrepareHeader(hwo, &(audio->waveHeader), sizeof(WAVEHDR));
+                waveOutWrite(hwo, &(audio->waveHeader), sizeof(WAVEHDR));
+            } else {
+                // If all samples are played, stop playback or handle as needed
+            }
         }
     }
 
