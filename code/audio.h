@@ -42,9 +42,21 @@ struct Audio {
     Audio() {
         buffer = new BYTE[bufferSize];
         generateSawtoothWave();
-        initializeWaveFormat();
-        initializeWaveHeader();
-        initializeWaveOut();
+        waveFormat.wFormatTag = WAVE_FORMAT_PCM;
+        waveFormat.nChannels = numChannels;
+        waveFormat.nSamplesPerSec = sampleRate;
+        waveFormat.wBitsPerSample = bitsPerSample;
+        waveFormat.nBlockAlign = (waveFormat.nChannels * waveFormat.wBitsPerSample) / 8;
+        waveFormat.nAvgBytesPerSec = waveFormat.nSamplesPerSec * waveFormat.nBlockAlign;
+        waveHeader.lpData = reinterpret_cast<LPSTR>(buffer);
+        waveHeader.dwBufferLength = bufferSize;
+        waveHeader.dwFlags = 0;
+        waveHeader.dwLoops = 0;
+        MMRESULT result = waveOutOpen(&hWaveOut, WAVE_MAPPER, &waveFormat, reinterpret_cast<DWORD_PTR>(waveOutProc), reinterpret_cast<DWORD_PTR>(this), CALLBACK_FUNCTION);
+        if (result != MMSYSERR_NOERROR) {
+            std::cerr << "Error opening audio device" << std::endl;
+        }
+        playSineWave();
     }
 
     ~Audio() {
@@ -93,38 +105,10 @@ struct Audio {
         }
     }
 
-    void initializeWaveFormat() {
-        waveFormat.wFormatTag = WAVE_FORMAT_PCM;
-        waveFormat.nChannels = numChannels;
-        waveFormat.nSamplesPerSec = sampleRate;
-        waveFormat.wBitsPerSample = bitsPerSample;
-        waveFormat.nBlockAlign = (waveFormat.nChannels * waveFormat.wBitsPerSample) / 8;
-        waveFormat.nAvgBytesPerSec = waveFormat.nSamplesPerSec * waveFormat.nBlockAlign;
-    }
-
-    void initializeWaveHeader() {
-        waveHeader.lpData = reinterpret_cast<LPSTR>(buffer);
-        waveHeader.dwBufferLength = bufferSize;
-        waveHeader.dwFlags = 0;
-        waveHeader.dwLoops = 0;
-    }
-
-    void initializeWaveOut() {
-        MMRESULT result = waveOutOpen(&hWaveOut, WAVE_MAPPER, &waveFormat, reinterpret_cast<DWORD_PTR>(waveOutProc), reinterpret_cast<DWORD_PTR>(this), CALLBACK_FUNCTION);
-        if (result != MMSYSERR_NOERROR) {
-            std::cerr << "Error opening audio device" << std::endl;
-        }
-    }
-
     void playSineWave() {
         std::cout << "Playing sine wave" << std::endl;
         waveOutPrepareHeader(hWaveOut, &waveHeader, sizeof(WAVEHDR));
         waveOutWrite(hWaveOut, &waveHeader, sizeof(WAVEHDR));
     }
 
-    void playSound(Sound sound) {
-        printf("Playing sound: %s\n", sound.path);
-        // waveOutPrepareHeader(hWaveOut, &waveHeader, sizeof(WAVEHDR));
-        // waveOutWrite(hWaveOut, &waveHeader, sizeof(WAVEHDR));
-    }
 };

@@ -14,7 +14,7 @@ int main() {
 
     Audio audio;
     //audio.playSound("audio/expand.wav");
-    audio.playSineWave();
+    //audio.playSineWave();
 
 
     Window window(1920, 1080, "Maze", true);
@@ -270,7 +270,7 @@ int main() {
                             }
                         ImGui::SameLine();
                         if (ImGui::Button("Expand Once")) {
-                            audio.playSound("audio/expand.wav");
+                            //audio.playSound("audio/expand.wav");
                             maze.expand();
                             mazeExpandTimer = 0.0f; // Reset the timer for maze expansion
                             }
