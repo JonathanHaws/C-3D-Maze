@@ -32,20 +32,16 @@ struct Audio {
     HWAVEOUT hWaveOut;
     WAVEFORMATEX waveFormat;
     WAVEHDR waveHeader;
-    const int durationInSeconds = 2; // Duration of the sine wave in seconds
-    const int sampleRate = 44100; // Sample rate (samples per second)
-    const int numChannels = 2; // Number of channels
-    const int bitsPerSample = 16; // Bits per sample
-    const int bufferSize = sampleRate * numChannels * bitsPerSample / 8 * durationInSeconds; // Total size of the buffer
+    const int bufferSize = 64 * 2 * 16 / 8; // buffer size in bytes
     BYTE* buffer; // Buffer to store the audio data
 
     Audio() {
         buffer = new BYTE[bufferSize];
         generateSawtoothWave();
         waveFormat.wFormatTag = WAVE_FORMAT_PCM;
-        waveFormat.nChannels = numChannels;
-        waveFormat.nSamplesPerSec = sampleRate;
-        waveFormat.wBitsPerSample = bitsPerSample;
+        waveFormat.nChannels = 2;
+        waveFormat.nSamplesPerSec = 44100;
+        waveFormat.wBitsPerSample = 16;
         waveFormat.nBlockAlign = (waveFormat.nChannels * waveFormat.wBitsPerSample) / 8;
         waveFormat.nAvgBytesPerSec = waveFormat.nSamplesPerSec * waveFormat.nBlockAlign;
         waveHeader.lpData = reinterpret_cast<LPSTR>(buffer);
@@ -81,7 +77,7 @@ struct Audio {
         const double frequency = 220.0; // Frequency of the sawtooth wave
 
         for (int i = 0; i < bufferSize / 2; ++i) {
-            double time = static_cast<double>(i) / sampleRate;
+            double time = static_cast<double>(i) / 44100;
 
             // Calculate the value of the sawtooth wave at the current time
             double value = 0.0;
@@ -106,7 +102,6 @@ struct Audio {
     }
 
     void playSineWave() {
-        std::cout << "Playing sine wave" << std::endl;
         waveOutPrepareHeader(hWaveOut, &waveHeader, sizeof(WAVEHDR));
         waveOutWrite(hWaveOut, &waveHeader, sizeof(WAVEHDR));
     }
