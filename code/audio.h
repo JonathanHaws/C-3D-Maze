@@ -5,27 +5,49 @@
 #include <vector>
 #include <fstream>
 #include <cstdio>
+#include <cstdlib>
 
 struct Sound {
+
     const char* path;
     std::vector<BYTE> wave;
 
-     Sound(const char* path) : path(path) {
+    void printData() {
+        for (int i = 0; i < wave.size(); i++) { printf("%d ", wave[i]); }
+    }
+
+    void generate_sine_wave(int seconds, int sampleRate, int frequency) {
+        wave.clear(); // Clear any existing wave data
+        const double amplitude = 32767.0; // Amplitude of the sine wave (maximum value for 16-bit audio)
+        const double twoPi = 2.0 * 3.14159265358979323846;
+        int numSamples = seconds * sampleRate; // Calculate the number of samples
+        for (int i = 0; i < numSamples; ++i) {
+            double time = static_cast<double>(i) / sampleRate;
+            double value = amplitude * sin(twoPi * frequency * time);
+            short sample = static_cast<short>(value);
+            wave.push_back(static_cast<BYTE>(sample & 0xFF)); // Lower byte
+            wave.push_back(static_cast<BYTE>((sample >> 8) & 0xFF)); // Upper byte
+        }
+    }
+
+    void generate_sine_wave(int seconds) {
+
+    }
+
+    Sound() {
+        //generate_sine_wave();
+    }
+
+    void load_wave_file(const char* path) {
         std::ifstream file(path, std::ios::binary);
-        if (file) {
+        if(file) {
             wave.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
             printf("Successfully read audio file: %s\n", path);
         } else {
             printf("Error opening audio file: %s\n", path);
         }
-        //printData();
     }
 
-    void printData() {
-        for (int i = 0; i < wave.size(); i++) {
-            printf("%d ", wave[i]);
-        }
-    }
 };
 
 struct Audio {
@@ -35,9 +57,13 @@ struct Audio {
     const int bufferSize = 64 * 2 * 16 / 8; // buffer size in bytes
     BYTE* buffer; // Buffer to store the audio data
 
+    ~Audio() {
+        delete[] buffer;
+        waveOutClose(hWaveOut);
+    }
+
     Audio() {
         buffer = new BYTE[bufferSize];
-        generateSawtoothWave();
         waveFormat.wFormatTag = WAVE_FORMAT_PCM;
         waveFormat.nChannels = 2;
         waveFormat.nSamplesPerSec = 44100;
@@ -52,58 +78,24 @@ struct Audio {
         if (result != MMSYSERR_NOERROR) {
             std::cerr << "Error opening audio device" << std::endl;
         }
-        playSineWave();
+        waveOutProc(hWaveOut, WOM_DONE, reinterpret_cast<DWORD_PTR>(this), 0, 0);
     }
 
-    ~Audio() {
-        delete[] buffer;
-        waveOutClose(hWaveOut);
-    }
+
 
     static void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2) {
         if (uMsg == WOM_DONE) {
             Audio* audio = reinterpret_cast<Audio*>(dwInstance);
-            audio->generateSawtoothWave();
+            
+            // Fill the buffer with random noise
+            for (int i = 0; i < audio->bufferSize; ++i) {
+                short sample = static_cast<short>(rand() % 65536 - 32768);
+                audio->buffer[i] = sample & 0xFF; // Lower byte
+            }
+
             waveOutPrepareHeader(hwo, &(audio->waveHeader), sizeof(WAVEHDR));
             waveOutWrite(hwo, &(audio->waveHeader), sizeof(WAVEHDR));
         }
-    }
-
-    void generateSawtoothWave() {
-        const double amplitude = 500.0; // Adjusted amplitude to make it less loud
-        const double twoPi = 2.0 * 3.14159265358979323846;
-
-        // Define the frequency of the sawtooth wave
-        const double frequency = 220.0; // Frequency of the sawtooth wave
-
-        for (int i = 0; i < bufferSize / 2; ++i) {
-            double time = static_cast<double>(i) / 44100;
-
-            // Calculate the value of the sawtooth wave at the current time
-            double value = 0.0;
-            for (int harmonic = 1; harmonic <= 10; ++harmonic) { // Adding harmonics for a richer sound
-                value += amplitude / harmonic * sin(twoPi * frequency * time * harmonic);
-            }
-
-            // Assign the sample to the buffer (without averaging as it's not needed for a sawtooth wave)
-            short sample = static_cast<short>(value);
-
-            // Adjust the sample amplitude to fit within the 16-bit range
-            if (sample > 32767) {
-                sample = 32767;
-            } else if (sample < -32768) {
-                sample = -32768;
-            }
-
-            // Assign the sample to the buffer
-            buffer[2 * i] = sample & 0xFF; // Lower byte
-            buffer[2 * i + 1] = (sample >> 8) & 0xFF; // Upper byte
-        }
-    }
-
-    void playSineWave() {
-        waveOutPrepareHeader(hWaveOut, &waveHeader, sizeof(WAVEHDR));
-        waveOutWrite(hWaveOut, &waveHeader, sizeof(WAVEHDR));
     }
 
 };
