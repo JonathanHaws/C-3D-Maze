@@ -1,11 +1,14 @@
 #pragma once
 
+#include <iostream>
 #include <Windows.h>
 #include <mmsystem.h>
 #include <vector>
 #include <fstream>
 #include <cstdio>
 #include <cstdlib>
+
+using namespace std;
 
 struct Sound {
 
@@ -47,67 +50,64 @@ struct Sound {
 };
 
 struct Audio {
-    HWAVEOUT hWaveOut;
+
+    HWAVEOUT hWaveOut; // Plaform-specific handle to the audio device
     WAVEFORMATEX waveFormat;
     WAVEHDR waveHeader;
 
-    int bufferSamples = 8192;
-    const int bufferSize = bufferSamples * 2 * 16 / 8; // 64 samples, 2 channels, 16 bits per sample, 8 bits per byte
+    static const int bufferSamples = 8192;
+    static const int bufferSize = bufferSamples * 2 * 16 / 8; // 64 samples, 2 channels, 16 bits per sample, 8 bits per byte
+    BYTE buffer[bufferSize]; 
     int buffersPlayed = 0; 
-    BYTE* buffer; 
     Sound sound;
-    
-    ~Audio() {
-        delete[] buffer;
-        waveOutClose(hWaveOut);
-    }
 
     Audio() {
-        buffer = new BYTE[bufferSize];
+        Sound sound;
+        combine_waves();
+
         waveFormat.wFormatTag = WAVE_FORMAT_PCM;
         waveFormat.nChannels = 2;
         waveFormat.nSamplesPerSec = 44100;
         waveFormat.wBitsPerSample = 16;
         waveFormat.nBlockAlign = (waveFormat.nChannels * waveFormat.wBitsPerSample) / 8;
         waveFormat.nAvgBytesPerSec = waveFormat.nSamplesPerSec * waveFormat.nBlockAlign;
-        waveHeader.lpData = reinterpret_cast<LPSTR>(buffer);
-        waveHeader.dwBufferLength = bufferSize;
-        waveHeader.dwFlags = 0;
-        waveHeader.dwLoops = 0;
+
         MMRESULT result = waveOutOpen(&hWaveOut, WAVE_MAPPER, &waveFormat, reinterpret_cast<DWORD_PTR>(waveOutProc), reinterpret_cast<DWORD_PTR>(this), CALLBACK_FUNCTION);
         if (result != MMSYSERR_NOERROR) {
             std::cerr << "Error opening audio device" << std::endl;
         }
         waveOutProc(hWaveOut, WOM_DONE, reinterpret_cast<DWORD_PTR>(this), 0, 0);
-        Sound sound;
         
     }
 
-    static void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2) {
-        if (uMsg == WOM_DONE) {
-            Audio* audio = reinterpret_cast<Audio*>(dwInstance);
-            audio->buffersPlayed++;
-
-            // Calculate the index from which to start copying the sound data
-            int startIndex = (audio->buffersPlayed - 1) * audio->bufferSize;
-
-            // Calculate the remaining samples to be played
-            int remainingSamples = audio->sound.wave.size() - startIndex;
-
-            // Copy sound data into the buffer starting from the calculated index
-            int copySize = (audio->bufferSize < remainingSamples) ? audio->bufferSize : remainingSamples;
-            std::copy(audio->sound.wave.begin() + startIndex,
-                    audio->sound.wave.begin() + startIndex + copySize,
-                    audio->buffer);
-
-            // If there are remaining samples, prepare and write the buffer
-            if (remainingSamples > 0) {
-                waveOutPrepareHeader(hwo, &(audio->waveHeader), sizeof(WAVEHDR));
-                waveOutWrite(hwo, &(audio->waveHeader), sizeof(WAVEHDR));
-            } else {
-                // If all samples are played, stop playback or handle as needed
-            }
-        }
+    ~Audio() {
+        waveOutClose(hWaveOut);
     }
 
+    void send_buffer_to_audio_device() {
+        waveHeader.lpData = reinterpret_cast<LPSTR>(buffer);
+        waveHeader.dwBufferLength = bufferSize;
+        waveHeader.dwFlags = 0;
+        waveHeader.dwLoops = 0;
+        waveOutPrepareHeader(hWaveOut, &waveHeader, sizeof(WAVEHDR));
+        waveOutWrite(hWaveOut, &waveHeader, sizeof(WAVEHDR));
+    }
+
+    void combine_waves() {
+
+            for (int i = 0; i < bufferSize; ++i) {
+                buffer[i] = sound.wave[(i + (buffersPlayed * bufferSize)) % sound.wave.size()];
+            }
+        }
+
+    static void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2) {
+        if (uMsg != WOM_DONE) { return; }
+
+
+        Audio* audio = reinterpret_cast<Audio*>(dwInstance);
+        audio->send_buffer_to_audio_device();
+        audio->combine_waves();
+        audio->buffersPlayed++;
+    
+    }
 };
