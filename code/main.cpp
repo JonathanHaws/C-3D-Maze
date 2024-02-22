@@ -100,7 +100,7 @@ int main() {
 
     while (window.is_open()) {
 
-        //std::cout << "Buffers Played " << audio.buffersPlayed << std::endl;
+        audio.tick();
 
         #pragma region Input
 
