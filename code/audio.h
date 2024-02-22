@@ -78,7 +78,10 @@ struct Audio {
     }
 
     ~Audio() {
+        waveOutReset(hWaveOut);
+        waveOutUnprepareHeader(hWaveOut, &waveHeader, sizeof(WAVEHDR));
         waveOutClose(hWaveOut);
+        
         if (audioThread.joinable()) { audioThread.join(); }
     }
 
