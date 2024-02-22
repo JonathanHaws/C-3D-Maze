@@ -100,8 +100,6 @@ int main() {
 
     while (window.is_open()) {
 
-        audio.tick();
-
         #pragma region Input
 
             window.poll_events();

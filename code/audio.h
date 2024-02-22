@@ -4,6 +4,7 @@
 #include <mmsystem.h>
 #include <vector>
 #include <fstream>
+#include <thread>
 
 struct Sound {
 
@@ -12,6 +13,12 @@ struct Sound {
 
     void printData() {
         for (int i = 0; i < wave.size(); i++) { printf("%d ", wave[i]); }
+    }
+
+    Sound() {
+        generate_sine_wave(1, 44100, 440);
+        //load_wave_file("audio/expand.wav");
+        //printData();
     }
 
     void generate_sine_wave(int seconds, int sampleRate, int frequency) {
@@ -26,10 +33,6 @@ struct Sound {
             wave.push_back(static_cast<BYTE>(sample & 0xFF)); // Lower byte
             wave.push_back(static_cast<BYTE>((sample >> 8) & 0xFF)); // Upper byte
         }
-    }
-
-    Sound() {
-        generate_sine_wave(1, 44100, 440);
     }
 
     void load_wave_file(const char* path) {
@@ -48,7 +51,7 @@ struct Audio {
 
     int buffers_played = 0;
     int current_buffer = 0;
-    static const int number_of_buffers = 8;
+    static const int number_of_buffers = 4;
     int needed_buffers = number_of_buffers; 
     static const int buffer_samples = 2048;
     static const int buffer_size = buffer_samples * 2 * 16 / 8; // 64 samples, 2 channels, 16 bits per sample, 8 bits per byte
@@ -60,6 +63,8 @@ struct Audio {
     WAVEFORMATEX waveFormat;
     WAVEHDR waveHeader;
 
+    std::thread audioThread;
+
     Audio() {
         waveFormat.wFormatTag = WAVE_FORMAT_PCM;
         waveFormat.nChannels = 2;
@@ -68,10 +73,13 @@ struct Audio {
         waveFormat.nBlockAlign = (waveFormat.nChannels * waveFormat.wBitsPerSample) / 8;
         waveFormat.nAvgBytesPerSec = waveFormat.nSamplesPerSec * waveFormat.nBlockAlign;
         waveOutOpen(&hWaveOut, WAVE_MAPPER, &waveFormat, reinterpret_cast<DWORD_PTR>(waveOutProc), reinterpret_cast<DWORD_PTR>(this), CALLBACK_FUNCTION);
+
+        audioThread = std::thread(&Audio::tick, this);
     }
 
     ~Audio() {
         waveOutClose(hWaveOut);
+        if (audioThread.joinable()) { audioThread.join(); }
     }
 
     static void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2) {
@@ -90,19 +98,18 @@ struct Audio {
         }
 
     void tick() {
-        if (needed_buffers <= 0) { return; }
-        send_buffer_to_audio_device(buffers[current_buffer]);
-
-        buffers_played++;
-        needed_buffers--;
-        current_buffer = (current_buffer + 1) % number_of_buffers;
-        
-        int offset = buffers_played * buffer_samples * waveFormat.nChannels * (waveFormat.wBitsPerSample / 8);
-        for (int i = 0; i < buffer_size; i++) {
-            buffers[current_buffer][i] = sound.wave[(i + offset) % sound.wave.size()];
+        while (true) {
+            if (needed_buffers <= 0) { continue; }
+    
+            int offset = buffers_played * buffer_samples * waveFormat.nChannels * (waveFormat.wBitsPerSample / 8);
+            for (int i = 0; i < buffer_size; i++) {
+                buffers[current_buffer][i] = sound.wave[(i + offset) % sound.wave.size()];
+            }
+            
+            send_buffer_to_audio_device(buffers[current_buffer]);
+            buffers_played++;
+            needed_buffers--;
+            current_buffer = (current_buffer + 1) % number_of_buffers;         
         }
-        
-
-        
     }
 };
