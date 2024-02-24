@@ -13,8 +13,8 @@
 int main() {
 
     HWND hwnd = GetConsoleWindow();
-    //ShowWindow(hwnd, SW_HIDE); // Hide the console window
-
+    ShowWindow(hwnd, SW_HIDE); // Hide the console window
+    
     Audio audio;
     Window window(1920, 1080, "Maze", true);
     Camera camera; 
@@ -94,6 +94,8 @@ int main() {
     #pragma endregion
 
     while (window.is_open()) {
+
+        //std::cout << "FPS: " << 1.0 / window.delta_time << std::endl;
 
         #pragma region Input
 
