@@ -69,9 +69,9 @@ struct Audio {
     std::vector<Sound> sounds;
 
     Audio() {
-        play_sound(Sound(440));
-        play_sound(Sound(660));
-        play_sound(Sound("audio/expand.wav"));
+        //play_sound(Sound(440));
+        //play_sound(Sound(660));
+        //play_sound(Sound("audio/expand.wav"));
         waveFormat.wFormatTag = WAVE_FORMAT_PCM;
         waveFormat.nChannels = 2;
         waveFormat.nSamplesPerSec = 44100;

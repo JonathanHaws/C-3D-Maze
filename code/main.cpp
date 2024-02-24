@@ -13,30 +13,22 @@
 int main() {
 
     HWND hwnd = GetConsoleWindow();
-    ShowWindow(hwnd, SW_HIDE); // Hide the console window
+    //ShowWindow(hwnd, SW_HIDE); // Hide the console window
 
     Audio audio;
-    //audio.playSound("audio/expand.wav");
-    //audio.playSineWave();
-
     Window window(1920, 1080, "Maze", true);
-    Camera camera( glm::vec3(0.0f, 20.0f, -40.0f), glm::vec3(0.0f, 0.0f, -20.0f), glm::vec3(0.0f, 1.0f, 0.0f), 80.0f, 1280.0f / 720.0f, 0.1f, 1000.0f ); 
+    Camera camera; 
     Framebuffer framebuffer(1920, 1080);
-
     Shader regularShader("shaders/regular_v.glsl", "shaders/regular_f.glsl");
     Shader postShader("shaders/post_v.glsl", "shaders/post_f.glsl");
     Shader mazeShader("shaders/maze_v.glsl", "shaders/maze_f.glsl");
-
     Texture grass("textures/grass.bmp");
-    Texture stone("textures/stone.bmp");
-       
+    Texture stone("textures/stone.bmp");     
     Mesh wall("meshes/cube.obj");
     Mesh feild("meshes/feild.obj");
     Mesh quad("meshes/quad.obj");
     Mesh sword("meshes/sword.obj");
-
     Maze maze(64, 64, 0.0);
-
     regularShader.bind();
 
     #pragma region Gui 
@@ -128,8 +120,8 @@ int main() {
             // Look around
             if (glfwGetInputMode(window.GLFW_window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) { // Look around only if the cursor is disabled
 
-                float cameraYaw = camera.get_yaw();
-                float cameraPitch = camera.get_pitch();
+                float cameraYaw = camera.yaw();
+                float cameraPitch = camera.pitch();
 
                 float sensitivity = 0.1f;
                 cameraYaw += window.mouse_delta_x * sensitivity;
@@ -160,8 +152,8 @@ int main() {
         grass.bind(0);
         
         glUniformMatrix4fv(glGetUniformLocation(regularShader.getID(), "Model"), 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
-        glUniformMatrix4fv(glGetUniformLocation(regularShader.getID(), "View"), 1, GL_FALSE, glm::value_ptr(camera.get_viewMatrix()));
-        glUniformMatrix4fv(glGetUniformLocation(regularShader.getID(), "Projection"), 1, GL_FALSE, glm::value_ptr(camera.get_projectionMatrix()));
+        glUniformMatrix4fv(glGetUniformLocation(regularShader.getID(), "View"), 1, GL_FALSE, glm::value_ptr(camera.viewMatrix()));
+        glUniformMatrix4fv(glGetUniformLocation(regularShader.getID(), "Projection"), 1, GL_FALSE, glm::value_ptr(camera.projectionMatrix()));
         
         feild.draw();
 
@@ -178,8 +170,8 @@ int main() {
         stone.bind(0);
         mazeShader.bind();
         glUniformMatrix4fv(glGetUniformLocation(mazeShader.getID(), "Model"), 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
-        glUniformMatrix4fv(glGetUniformLocation(mazeShader.getID(), "View"), 1, GL_FALSE, glm::value_ptr(camera.get_viewMatrix()));
-        glUniformMatrix4fv(glGetUniformLocation(mazeShader.getID(), "Projection"), 1, GL_FALSE, glm::value_ptr(camera.get_projectionMatrix()));
+        glUniformMatrix4fv(glGetUniformLocation(mazeShader.getID(), "View"), 1, GL_FALSE, glm::value_ptr(camera.viewMatrix()));
+        glUniformMatrix4fv(glGetUniformLocation(mazeShader.getID(), "Projection"), 1, GL_FALSE, glm::value_ptr(camera.projectionMatrix()));
 
         glUniform3fv(glGetUniformLocation(mazeShader.getID(), "lightDirection"), 1, glm::value_ptr(glm::vec3(sunPosX, sunPosY, sunPosZ)));
         glUniform3fv(glGetUniformLocation(mazeShader.getID(), "objectColor"), 1, glm::value_ptr(objectColor));
@@ -194,6 +186,7 @@ int main() {
         framebuffer.unbind();
 
         glUseProgram(postShader.getID());
+        //glUniformMatrix4fv(glGetUniformLocation(mazeShader.getID(), "Aspsect Ratio"), 1, GL_FALSE, glm::value_ptr(camera.get_projectionMatrix()));
         glUniform1i(glGetUniformLocation(postShader.getID(), "fog"), fog);
         glUniform1f(glGetUniformLocation(postShader.getID(), "fog_distance"), fog_distance);
         glUniform1f(glGetUniformLocation(postShader.getID(), "fog_falloff"), fog_falloff);

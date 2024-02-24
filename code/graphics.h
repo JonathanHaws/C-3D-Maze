@@ -403,51 +403,31 @@ struct Mesh {
 
     };
 
-class Camera {
-    public:
-        Camera(const glm::vec3& initialPosition = glm::vec3(0.0f, 20.0f, -40.0f),
-                const glm::vec3& initialTarget = glm::vec3(0.0f, 0.0f, -20.0f),
-                const glm::vec3& initialUp = glm::vec3(0.0f, 1.0f, 0.0f),
-                float fov = 80.0f,
-                float aspectRatio = 1280.0f / 720.0f,
-                float nearPlane = 0.1f,
-                float farPlane = 1000.0f)
-                : position(initialPosition), target(initialTarget), up(initialUp), fov(fov), aspectRatio(aspectRatio), nearPlane(nearPlane), farPlane(farPlane) {}
+struct Camera {
+    
+    glm::vec3 position = glm::vec3(0.0f, 20.0f, -40.0f);
+    glm::vec3 target = glm::vec3(0.0f, 0.0f, -20.0f);
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+    float fov = 80.0f;
+    float aspectRatio = 1280.0f / 720.0f;
+    float nearPlane = 0.1f;
+    float farPlane = 1000.0f;
+    float pitch() { 
+        return glm::degrees(asin(glm::normalize(target - position).y)); 
+        }
+    float yaw() { 
+        float yaw = atan2(glm::normalize(target - position).z, glm::normalize(target - position).x);
+        if (yaw < 0) { yaw += 2 * glm::pi<float>(); }
+        return glm::degrees(yaw);
+        }
+    glm::mat4 viewMatrix() {
+        return glm::lookAt(position, target, up);
+    }
+    glm::mat4 projectionMatrix() {
+        return glm::perspective(glm::radians(fov), aspectRatio, nearPlane, farPlane);
+    };
 
-        float get_pitch() const {
-            glm::vec3 direction = glm::normalize(target - position);
-            return glm::degrees(asin(direction.y));
-            }
-
-        float get_yaw() const {
-            glm::vec3 direction = glm::normalize(target - position);
-            float yaw = atan2(direction.z, direction.x);
-            if (yaw < 0) {
-                yaw += 2 * glm::pi<float>(); // Ensure yaw is positive
-            }
-            return glm::degrees(yaw);
-            }
-
-        glm::mat4 get_viewMatrix() const {
-            return glm::lookAt(position, target, up);
-            }
-
-        glm::mat4 get_projectionMatrix() const {
-            return glm::perspective(glm::radians(fov), aspectRatio, nearPlane, farPlane);
-            }
-
-        void set_aspect_ratio(float newAspectRatio) {
-            aspectRatio = newAspectRatio;
-            }
-
-        float fov;
-        float aspectRatio;
-        float nearPlane;
-        float farPlane;
-        glm::vec3 position;
-        glm::vec3 target;
-        glm::vec3 up;
-        };
+};
 
 class Framebuffer {
     public:
