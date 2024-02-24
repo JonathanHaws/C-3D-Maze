@@ -12,6 +12,9 @@
 
 int main() {
 
+    HWND hwnd = GetConsoleWindow();
+    ShowWindow(hwnd, SW_HIDE); // Hide the console window
+
     Audio audio;
     //audio.playSound("audio/expand.wav");
     //audio.playSineWave();

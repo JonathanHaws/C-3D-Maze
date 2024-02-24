@@ -45,9 +45,9 @@ struct Sound {
         std::ifstream file(path, std::ios::binary);
         if(file) {
             wave.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-            printf("Successfully read audio file: %s\n", path);
+            //printf("Successfully read audio file: %s\n", path);
         } else {
-            printf("Error opening audio file: %s\n", path);
+            //printf("Error opening audio file: %s\n", path);
         }
     }
 
