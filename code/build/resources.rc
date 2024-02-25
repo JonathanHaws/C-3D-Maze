@@ -1,3 +1,6 @@
+
+#pragma once
+
 // Icon resource
 IDI_ICON1 ICON "icon.ico"
 
@@ -6,7 +9,7 @@ IDI_ICON1 ICON "icon.ico"
 PRODUCTVERSION 1,0,0,0
 FILEVERSION 0,0,0,0
 BEGIN
-    BLOCK "StringFileInfo"
+    BLOCK "StringFileInfo" 
     BEGIN
         BLOCK "040904E4"
         BEGIN

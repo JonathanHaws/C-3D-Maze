@@ -5,6 +5,9 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <unordered_map>
+#include <windows.h>
+
+#undef min
 
 struct Window {
 
@@ -27,17 +30,31 @@ struct Window {
     Window(int width, int height, const char* title, bool fullscreen) 
         : width(width), height(height), title(title), fullscreen(fullscreen) {
         
-        if (!glfwInit()) {
-            std::cout << "Failed to initialize GLFW" << std::endl;
-            exit(-1);
-        }
+        #pragma region Initialize GLFW and create window
+            if (!glfwInit()) {
+                std::cout << "Failed to initialize GLFW" << std::endl;
+                exit(-1);
+            }
 
-        GLFW_window = glfwCreateWindow(width, height, title, NULL, NULL);
-        if (!GLFW_window) {
-            std::cout << "Failed to create window" << std::endl;
-            glfwTerminate();
-            exit(-1);
-        }
+            GLFW_window = glfwCreateWindow(width, height, title, NULL, NULL);
+            if (!GLFW_window) {
+                std::cout << "Failed to create window" << std::endl;
+                glfwTerminate();
+                exit(-1);
+            }
+
+            #pragma endregion
+
+        #pragma region Set Icon
+            unsigned char pixels[4] = {0, 0, 0, 255}; // RGBA format, black color
+
+            GLFWimage icon;
+            icon.width = 1;
+            icon.height = 1;
+            icon.pixels = pixels;
+
+            glfwSetWindowIcon(GLFW_window, 1, &icon);
+            #pragma endregion
 
         glfwMakeContextCurrent(GLFW_window);
 

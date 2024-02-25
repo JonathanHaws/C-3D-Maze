@@ -9,6 +9,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#undef min
+
 void clear_gl_errors() {
     while (glGetError() != GL_NO_ERROR);
     }

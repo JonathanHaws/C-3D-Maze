@@ -12,6 +12,7 @@
 
 int main() {
 
+    HICON hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APPLICATION)); // IDI_APPLICATION is a default icon identifier
     HWND hwnd = GetConsoleWindow();
     ShowWindow(hwnd, SW_HIDE); // Hide the console window
     
