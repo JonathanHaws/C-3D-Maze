@@ -45,16 +45,34 @@ struct Window {
 
             #pragma endregion
 
-        #pragma region Set Icon
-            unsigned char pixels[4] = {0, 0, 0, 255}; // RGBA format, black color
-
-            GLFWimage icon;
-            icon.width = 1;
-            icon.height = 1;
-            icon.pixels = pixels;
-
-            glfwSetWindowIcon(GLFW_window, 1, &icon);
-            #pragma endregion
+#pragma region Set Icon
+    HINSTANCE hInstance = GetModuleHandle(NULL);
+    HRSRC hResInfo = FindResource(hInstance, MAKEINTRESOURCE(1), RT_ICON); // Replace '1' with the appropriate resource identifier
+    if (hResInfo != NULL) {
+        HGLOBAL hResData = LoadResource(hInstance, hResInfo);
+        if (hResData != NULL) {
+            DWORD dwResSize = SizeofResource(hInstance, hResInfo);
+            if (dwResSize > 0) {
+                void* pResData = LockResource(hResData);
+                if (pResData != NULL) {
+                    // Convert resource data to unsigned char array
+                    unsigned char* iconData = new unsigned char[dwResSize];
+                    memcpy(iconData, pResData, dwResSize);
+                    
+                    // Create GLFW image from the icon data
+                    GLFWimage icon;
+                    icon.width = 32; // Set appropriate width and height according to the icon size
+                    icon.height = 32;
+                    icon.pixels = iconData;
+                    
+                    // Set the window icon using GLFW
+                    glfwSetWindowIcon(GLFW_window, 1, &icon);
+                }
+            }
+            FreeResource(hResData);
+        }
+    }
+#pragma endregion
 
         glfwMakeContextCurrent(GLFW_window);
 
