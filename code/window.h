@@ -7,8 +7,6 @@
 #include <unordered_map>
 #include <windows.h>
 
-#undef min
-
 struct Window {
 
     // Input

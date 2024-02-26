@@ -9,8 +9,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#undef min
-
 void clear_gl_errors() {
     while (glGetError() != GL_NO_ERROR);
     }
@@ -168,8 +166,8 @@ struct Texture {
         int defaultSubWidth = (subWidth == -1) ? width : subWidth;
         int defaultSubHeight = (subHeight == -1) ? height : subHeight;
 
-        int targetWidth = std::min(defaultSubWidth, width - xoffset);
-        int targetHeight = std::min(defaultSubHeight, height - yoffset);
+        int targetWidth = (defaultSubWidth < width - xoffset) ? defaultSubWidth : (width - xoffset);
+        int targetHeight = (defaultSubHeight < height - yoffset) ? defaultSubHeight : (height - yoffset);
 
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexSubImage2D(GL_TEXTURE_2D, 0, xoffset, yoffset, targetWidth, targetHeight, GL_BGR, GL_UNSIGNED_BYTE, newImageData.data());
@@ -466,3 +464,5 @@ struct Framebuffer {
         glDeleteTextures(1, &depth_texture);
     }
 };
+
+

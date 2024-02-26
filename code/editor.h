@@ -8,14 +8,51 @@
 #include <graphics.h>
 #include <maze.h>
 
-
 struct Editor {
 
     Window window;
     Camera& camera; 
     Maze& maze;
+    float& sunX;
+    float& sunY;
+    float& sunZ;
+    glm::vec3& objectColor;
+    glm::vec3& ambientColor;
+    glm::vec3& lightColor;
+    bool& depthBuffer;
+    float& exposure;
+    float& gamma;
+    bool& fog;
+    float& fog_distance;
+    float& fog_falloff;
+    glm::vec3&  fog_color;
+    bool& blur;
+    int& blurRadius;
+    bool& ambientOcclusion;
+    bool& occlusionBuffer;
+    int& occlusionRadius;
+    float& occlusionThreshold;
+    float& occlusionStrength;
 
-    Editor (Window& window, Camera& camera, Maze& maze) : window(window), camera(camera), maze(maze) {
+    Editor (Window& window, 
+            Camera& camera, 
+            Maze& maze, 
+            float& sunX, float& sunY, float& sunZ, 
+            glm::vec3& objectColor, glm::vec3& ambientColor, glm::vec3& lightColor, 
+            bool& depthBuffer, float& exposure, float& gamma,
+            bool& fog, float& fog_distance, float& fog_falloff, glm::vec3& fog_color,
+            bool& blur, int& blurRadius,
+            bool& ambientOcclusion, bool& occlusionBuffer, int& occlusionRadius, float& occlusionThreshold, float& occlusionStrength
+            ):
+            window(window), camera(camera), maze(maze), 
+            sunX(sunX), sunY(sunY), sunZ(sunZ), 
+            objectColor(objectColor), ambientColor(ambientColor), lightColor(lightColor),
+            depthBuffer(depthBuffer), exposure(exposure), gamma(gamma),
+            fog(fog), fog_distance(fog_distance), fog_falloff(fog_falloff), fog_color(fog_color),
+            blur(blur), blurRadius(blurRadius),
+            ambientOcclusion(ambientOcclusion), occlusionBuffer(occlusionBuffer), occlusionRadius(occlusionRadius), occlusionThreshold(occlusionThreshold), occlusionStrength(occlusionStrength)
+            {
+
         ImGui::CreateContext();
         ImGui_ImplGlfw_InitForOpenGL(window.GLFW_window, true);
         ImGui_ImplOpenGL3_Init("#version 130");
@@ -95,41 +132,43 @@ struct Editor {
                 }
             }
 
-        // if (ImGui::CollapsingHeader("Lighting")) {
-        //     ImGui::SliderFloat("Sun X", &sunPosX, -10.0f, 10.0f); 
-        //     ImGui::SliderFloat("Sun Y", &sunPosY, 1.0f, 10.0f);
-        //     ImGui::SliderFloat("Sun Z", &sunPosZ, -10.0f, 10.0f);
+        if (ImGui::CollapsingHeader("Lighting")) {
+            ImGui::SliderFloat("Sun X", &sunX, -10.0f, 10.0f); 
+            ImGui::SliderFloat("Sun Y", &sunY, 1.0f, 10.0f);
+            ImGui::SliderFloat("Sun Z", &sunZ, -10.0f, 10.0f);
 
-        //     ImGui::ColorEdit3("Object Color", glm::value_ptr(objectColor));
-        //     ImGui::ColorEdit3("Ambient Color", glm::value_ptr(ambientColor));
-        //     ImGui::ColorEdit3("Light Color", glm::value_ptr(lightColor));
-        //     }
+            ImGui::ColorEdit3("Object Color", glm::value_ptr(objectColor));
+            ImGui::ColorEdit3("Ambient Color", glm::value_ptr(ambientColor));
+            ImGui::ColorEdit3("Light Color", glm::value_ptr(lightColor));
+        }
 
-        // if (ImGui::CollapsingHeader("Post Shader")) {
-        //     ImGui::Checkbox("Depth Buffer", &depthBuffer);
-        //     ImGui::SliderFloat("Exposure", &exposure, 0.0f, 10.0f);
-        //     ImGui::SliderFloat("Gamma", &gamma, 0.0f, 10.0f);
+        if (ImGui::CollapsingHeader("Post Shader")) {
+            ImGui::Checkbox("Depth Buffer", &depthBuffer);
+            ImGui::SliderFloat("Exposure", &exposure, 0.0f, 10.0f);
+            ImGui::SliderFloat("Gamma", &gamma, 0.0f, 10.0f);
 
-        //     ImGui::Checkbox("Fog", &fog);
-        //     if (fog) { 
-        //         ImGui::SliderFloat("Distance", &fog_distance, 0.0f, 1.0f); 
-        //         ImGui::SliderFloat("Falloff", &fog_falloff, 0.0f, 1.0f);
-        //         ImGui::ColorEdit3("Color", glm::value_ptr(fog_color));
-        //         }
+            ImGui::Checkbox("Fog", &fog);
+            if (fog) { 
+                ImGui::SliderFloat("Distance", &fog_distance, 0.0f, 1.0f); 
+                ImGui::SliderFloat("Falloff", &fog_falloff, 0.0f, 1.0f);
+                ImGui::ColorEdit3("Color", glm::value_ptr(fog_color));
+                }
                         
-        //     ImGui::Checkbox("Blur", &blur);
-        //     if (blur) { 
-        //         ImGui::SliderInt("Blur Radius", &blurRadius, 1, 10); 
-        //         }
+            ImGui::Checkbox("Blur", &blur);
+            if (blur) { 
+                ImGui::SliderInt("Blur Radius", &blurRadius, 1, 10); 
+            }
 
-        //     ImGui::Checkbox("Ambient Occlusion", &ambientOcclusion);
-        //     if (ambientOcclusion) { 
-        //         ImGui::Checkbox("Occlusion Buffer", &occlusionBuffer);
-        //         ImGui::SliderInt("Radius", &occlusionRadius, 1, 10); 
-        //         ImGui::SliderFloat("Threshold", &occlusionThreshold, 0.0f, 1.0f);
-        //         ImGui::SliderFloat("Strength", &occlusionStrength, 0.0f, 100.0f);
-        //         }
-        //     }
+            ImGui::Checkbox("Ambient Occlusion", &ambientOcclusion);
+            if (ambientOcclusion) { 
+                ImGui::Checkbox("Occlusion Buffer", &occlusionBuffer);
+                ImGui::SliderInt("Radius", &occlusionRadius, 1, 10); 
+                ImGui::SliderFloat("Threshold", &occlusionThreshold, 0.0f, 1.0f);
+                ImGui::SliderFloat("Strength", &occlusionStrength, 0.0f, 100.0f);
+                }
+        }
+
+        //std::cout << "FPS: " << 1.0 / window.delta_time << std::endl;
 
         ImGui::End();
 

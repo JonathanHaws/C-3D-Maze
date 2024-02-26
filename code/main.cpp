@@ -10,9 +10,9 @@
 
 int main() {
 
-    float sunPosX = 0.1f;
-    float sunPosY = 1.0f;
-    float sunPosZ = 0.1f;    
+    float sunX = 0.1f;
+    float sunY = 1.0f;
+    float sunZ = 0.1f;    
     glm::vec3 objectColor = glm::vec3(1.000f, 1.000f, 1.000f);
     glm::vec3 ambientColor = glm::vec3(0.251f, 0.316f, 0.324f);
     glm::vec3 lightColor = glm::vec3(0.853f, 0.609f, 0.418f);
@@ -45,11 +45,9 @@ int main() {
     Mesh quad("meshes/quad.obj");
     Mesh sword("meshes/sword.obj");
     Maze maze(64, 64, 5.0);
-    Editor editor(window, camera, maze);
+    Editor editor(window, camera, maze, sunX, sunY, sunZ, objectColor, ambientColor, lightColor, depthBuffer, exposure, gamma, fog, fog_distance, fog_falloff, fog_color, blur, blurRadius, ambientOcclusion, occlusionBuffer, occlusionRadius, occlusionThreshold, occlusionStrength);
 
     while (window.is_open()) {
-
-        //std::cout << "FPS: " << 1.0 / window.delta_time << std::endl;
 
         #pragma region Input
 
@@ -98,7 +96,7 @@ int main() {
             #pragma endregion
 
         regularShader.bind();
-        regularShader.setVec3("lightDirection", sunPosX, sunPosY, sunPosZ);
+        regularShader.setVec3("lightDirection", sunX, sunY, sunZ);
         regularShader.setVec3("objectColor", objectColor.x, objectColor.y, objectColor.z);
         regularShader.setVec3("ambientColor", ambientColor.x, ambientColor.y, ambientColor.z);
         regularShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
@@ -137,7 +135,7 @@ int main() {
         mazeShader.setMat4("Projection", camera.projectionMatrix());
 
         mazeShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
-        mazeShader.setVec3("lightDirection", sunPosX, sunPosY, sunPosZ);
+        mazeShader.setVec3("lightDirection", sunX, sunY, sunZ);
         mazeShader.setVec3("objectColor", objectColor.x, objectColor.y, objectColor.z);
         mazeShader.setVec3("ambientColor", ambientColor.x, ambientColor.y, ambientColor.z);
 
