@@ -7,7 +7,7 @@ IDI_ICON1 ICON "icon.ico"
 // Version information
 1 VERSIONINFO
 PRODUCTVERSION 1,0,0,0
-FILEVERSION 0,0,0,0
+FILEVERSION 1,0,0,0
 BEGIN
     BLOCK "StringFileInfo" 
     BEGIN
@@ -15,7 +15,9 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "\0"
             VALUE "FileDescription", "A 3D Maze game in which you try to solve the maze as quickly as possible\0"
+            VALUE "ProductName", "Maze Race"  
             VALUE "ProductVersion", "1.0.0.0\0"
+            VALUE "LegalCopyright", "Free use with credit"  // Specify "None" for copyright
         END
     END
     BLOCK "VarFileInfo"

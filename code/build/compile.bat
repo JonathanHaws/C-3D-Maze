@@ -7,8 +7,8 @@ set output_path=..\app\
 set output_file=maze.exe
 
 :: Compile resource script
-::if exist resources.res ( del /F resources.res )
-::rc.exe /fo resources.res resources.rc
+if exist resources.res ( del /F resources.res )
+rc.exe /fo resources.res resources.rc
 
 if exist %output_file% ( del /F %output_file% )
 

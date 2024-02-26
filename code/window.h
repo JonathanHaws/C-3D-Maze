@@ -45,34 +45,45 @@ struct Window {
 
             #pragma endregion
 
-#pragma region Set Icon
-    HINSTANCE hInstance = GetModuleHandle(NULL);
-    HRSRC hResInfo = FindResource(hInstance, MAKEINTRESOURCE(1), RT_ICON); // Replace '1' with the appropriate resource identifier
-    if (hResInfo != NULL) {
-        HGLOBAL hResData = LoadResource(hInstance, hResInfo);
-        if (hResData != NULL) {
-            DWORD dwResSize = SizeofResource(hInstance, hResInfo);
-            if (dwResSize > 0) {
-                void* pResData = LockResource(hResData);
-                if (pResData != NULL) {
-                    // Convert resource data to unsigned char array
-                    unsigned char* iconData = new unsigned char[dwResSize];
-                    memcpy(iconData, pResData, dwResSize);
-                    
-                    // Create GLFW image from the icon data
-                    GLFWimage icon;
-                    icon.width = 32; // Set appropriate width and height according to the icon size
-                    icon.height = 32;
-                    icon.pixels = iconData;
-                    
-                    // Set the window icon using GLFW
-                    glfwSetWindowIcon(GLFW_window, 1, &icon);
+        #pragma region Set Icon
+            HINSTANCE hInstance = GetModuleHandle(NULL);
+            // icon mipmaps are stored at different indexes to make smaller icons look better
+            HRSRC hResInfo = FindResource(hInstance, MAKEINTRESOURCE(5), RT_ICON); // 1 = 16x16, 2 = 32x32, 3 = 64x64, 4 = 128x128, 5 = 256x256, 
+            if (hResInfo != NULL) {
+                HGLOBAL hResData = LoadResource(hInstance, hResInfo);
+                if (hResData != NULL) {
+                    DWORD dwResSize = SizeofResource(hInstance, hResInfo);
+                    if (dwResSize > 0) {
+                        void* pResData = LockResource(hResData);
+                        if (pResData != NULL) {
+                            // Convert resource data to unsigned char array
+                            unsigned char* iconData = new unsigned char[dwResSize];
+                            memcpy(iconData, pResData, dwResSize);
+
+                            // Flip the icon data vertically
+                            unsigned char* flippedIconData = new unsigned char[dwResSize];
+                            int stride = 256 * 4; 
+                            for (int y = 0; y < 256; ++y) {
+                                memcpy(flippedIconData + (255 - y) * stride, iconData + y * stride, stride);
+                            }
+
+                            // Create GLFW image from the flipped icon data
+                            GLFWimage icon;
+                            icon.width = 256; // Set appropriate width and height according to the icon size
+                            icon.height = 256;
+                            icon.pixels = flippedIconData;
+
+                            // Set the window icon using GLFW
+                            glfwSetWindowIcon(GLFW_window, 1, &icon);
+
+                            // Clean up resources
+                            delete[] iconData;
+                        }
+                    }
+                    FreeResource(hResData);
                 }
             }
-            FreeResource(hResData);
-        }
-    }
-#pragma endregion
+        #pragma endregion
 
         glfwMakeContextCurrent(GLFW_window);
 
