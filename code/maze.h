@@ -11,18 +11,18 @@ struct Maze {
     
     int width = 0; 
     int height = 0; 
-    float expandTimer = 0.0f; 
-    float expandSpeed = 0.0f;
+    float timer = 0.0f; 
+    float speed = 0.0f;
     std::stack<std::pair<int, int>> cells_to_expand; 
     std::vector<std::vector<char>> corridors;
     Mesh wall; 
     Texture texture;
     GLuint instanceBuffer = 0; 
 
-    Maze(int width, int height, float expandSpeed):
+    Maze(int width, int height, float speed):
         width(width),
         height(height),
-        expandSpeed(expandSpeed),
+        speed(speed),
         texture(width, height),
         wall("meshes/cube.obj") {
         corridors.resize(width, std::vector<char>(height, '#'));
@@ -54,11 +54,9 @@ struct Maze {
     }
 
     void reset() {
-        
         corridors.clear();
         corridors.resize(width, std::vector<char>(height, '#'));
         cells_to_expand = std::stack<std::pair<int, int>>();
-        expandTimer = 0.0f;
         updateTextureFromCorridors();
         }
 
@@ -105,11 +103,10 @@ struct Maze {
         }
 
     void tick(float deltaTime) {
-
-        expandTimer += deltaTime;
-        if (expandTimer > expandSpeed) {
+        timer += speed * deltaTime;
+        while (timer > 1) {
             expand();
-            expandTimer = 0.0f;
+            timer --;
             }
         }      
 
