@@ -12,9 +12,7 @@
 
 int main() {
 
-    HICON hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APPLICATION)); // IDI_APPLICATION is a default icon identifier
-    HWND hwnd = GetConsoleWindow();
-    ShowWindow(hwnd, SW_HIDE); // Hide the console window
+    bool god_mode = true;
     
     Audio audio;
     Window window(1920, 1080, "Maze", true);
@@ -142,6 +140,12 @@ int main() {
                 
             #pragma endregion
 
+        regularShader.bind();
+        regularShader.setVec3("lightDirection", sunPosX, sunPosY, sunPosZ);
+        regularShader.setVec3("objectColor", objectColor.x, objectColor.y, objectColor.z);
+        regularShader.setVec3("ambientColor", ambientColor.x, ambientColor.y, ambientColor.z);
+        regularShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
+
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
 
@@ -153,69 +157,66 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         grass.bind(0);
-        
-        glUniformMatrix4fv(glGetUniformLocation(regularShader.getID(), "Model"), 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
-        glUniformMatrix4fv(glGetUniformLocation(regularShader.getID(), "View"), 1, GL_FALSE, glm::value_ptr(camera.viewMatrix()));
-        glUniformMatrix4fv(glGetUniformLocation(regularShader.getID(), "Projection"), 1, GL_FALSE, glm::value_ptr(camera.projectionMatrix()));
+        mazeShader.setMat4("Model",  glm::mat4(1.0f));
+        mazeShader.setMat4("View", camera.viewMatrix());
+        mazeShader.setMat4("Projection", camera.projectionMatrix());
         
         feild.draw();
 
-        GLuint modelUniformLocation = glGetUniformLocation(mazeShader.getID(), "Model");
+        GLuint modelUniformLocation = glGetUniformLocation(mazeShader.id, "Model");
         glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(20.0f));
         glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 50.0f, 0.0f));
         glm::mat4 transformMatrix = translationMatrix * scaleMatrix;
         glUniformMatrix4fv(modelUniformLocation, 1, GL_FALSE, glm::value_ptr(transformMatrix));
 
         maze.texture.bind(0);
-        glUniform1i(glGetUniformLocation(postShader.getID(), "texture_diffuse1"), 0);
+        glUniform1i(glGetUniformLocation(postShader.id, "texture_diffuse1"), 0);
         quad.draw();
 
         stone.bind(0);
         mazeShader.bind();
-        glUniformMatrix4fv(glGetUniformLocation(mazeShader.getID(), "Model"), 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
-        glUniformMatrix4fv(glGetUniformLocation(mazeShader.getID(), "View"), 1, GL_FALSE, glm::value_ptr(camera.viewMatrix()));
-        glUniformMatrix4fv(glGetUniformLocation(mazeShader.getID(), "Projection"), 1, GL_FALSE, glm::value_ptr(camera.projectionMatrix()));
+        mazeShader.setMat4("Model",  glm::mat4(1.0f));
+        mazeShader.setMat4("View", camera.viewMatrix());
+        mazeShader.setMat4("Projection", camera.projectionMatrix());
 
-        glUniform3fv(glGetUniformLocation(mazeShader.getID(), "lightDirection"), 1, glm::value_ptr(glm::vec3(sunPosX, sunPosY, sunPosZ)));
-        glUniform3fv(glGetUniformLocation(mazeShader.getID(), "objectColor"), 1, glm::value_ptr(objectColor));
-        glUniform3fv(glGetUniformLocation(mazeShader.getID(), "ambientColor"), 1, glm::value_ptr(ambientColor));
-        glUniform3fv(glGetUniformLocation(mazeShader.getID(), "lightColor"), 1, glm::value_ptr(lightColor));
+        mazeShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
+        mazeShader.setVec3("lightDirection", sunPosX, sunPosY, sunPosZ);
+        mazeShader.setVec3("objectColor", objectColor.x, objectColor.y, objectColor.z);
+        mazeShader.setVec3("ambientColor", ambientColor.x, ambientColor.y, ambientColor.z);
 
-        //glUniform1i(glGetUniformLocation(mazeShader.getID(), "mazeWidth"), maze.width);
-        //glUniform1i(glGetUniformLocation(mazeShader.getID(), "mazeHeight"), maze.height);
         maze.draw();
         mazeShader.unbind();
 
         framebuffer.unbind();
 
-        glUseProgram(postShader.getID());
-        //glUniformMatrix4fv(glGetUniformLocation(mazeShader.getID(), "Aspsect Ratio"), 1, GL_FALSE, glm::value_ptr(camera.get_projectionMatrix()));
-        glUniform1i(glGetUniformLocation(postShader.getID(), "fog"), fog);
-        glUniform1f(glGetUniformLocation(postShader.getID(), "fog_distance"), fog_distance);
-        glUniform1f(glGetUniformLocation(postShader.getID(), "fog_falloff"), fog_falloff);
-        glUniform3fv(glGetUniformLocation(postShader.getID(), "fog_color"), 1, glm::value_ptr(fog_color));
-         
-        glUniform1f(glGetUniformLocation(postShader.getID(), "exposure"), exposure);
-        glUniform1f(glGetUniformLocation(postShader.getID(), "gamma"), gamma);
-        glUniform1i(glGetUniformLocation(postShader.getID(), "blur"), blur);
-        glUniform1i(glGetUniformLocation(postShader.getID(), "blurRadius"), blurRadius);     
-        glUniform1i(glGetUniformLocation(postShader.getID(), "depthBuffer"), depthBuffer);
-        glUniform1i(glGetUniformLocation(postShader.getID(), "ambientOcclusion"), ambientOcclusion);
-        glUniform1i(glGetUniformLocation(postShader.getID(), "occlusionBuffer"), occlusionBuffer);
-        glUniform1i(glGetUniformLocation(postShader.getID(), "occlusionRadius"), occlusionRadius);
-        glUniform1f(glGetUniformLocation(postShader.getID(), "occlusionThreshold"), occlusionThreshold);
-        glUniform1f(glGetUniformLocation(postShader.getID(), "occlusionStrength"), occlusionStrength);
+        postShader.bind();
+        postShader.setInt("fog", fog);
+        postShader.setFloat("fog_distance", fog_distance);
+        postShader.setFloat("fog_falloff", fog_falloff);
+        postShader.setVec3("fog_color", fog_color.x, fog_color.y, fog_color.z);
+        postShader.setFloat("exposure", exposure);
+        postShader.setFloat("gamma", gamma);
+        postShader.setInt("blur", blur);
+        postShader.setInt("blurRadius", blurRadius);
+        postShader.setInt("depthBuffer", depthBuffer);
+        postShader.setInt("ambientOcclusion", ambientOcclusion);
+        postShader.setInt("occlusionBuffer", occlusionBuffer);
+        postShader.setInt("occlusionRadius", occlusionRadius);
+        postShader.setFloat("occlusionThreshold", occlusionThreshold);
+        postShader.setFloat("occlusionStrength", occlusionStrength);
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, framebuffer.getColorTexture());
-        glUniform1i(glGetUniformLocation(postShader.getID(), "colorTexture"), 0);
+        glBindTexture(GL_TEXTURE_2D, framebuffer.color_texture);
+        glUniform1i(glGetUniformLocation(postShader.id, "colorTexture"), 0);
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, framebuffer.getDepthTexture());
-        glUniform1i(glGetUniformLocation(postShader.getID(), "depthTexture"), 1);
+        glBindTexture(GL_TEXTURE_2D, framebuffer.depth_texture);
+        glUniform1i(glGetUniformLocation(postShader.id, "depthTexture"), 1);
 
         quad.draw();
 
-        #pragma region Gui 
+        if (god_mode) {
+
+        #pragma region Debug 
             
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
@@ -284,7 +285,6 @@ int main() {
                         ImGui::ColorEdit3("Light Color", glm::value_ptr(lightColor));
                         }
 
-
                     if (ImGui::CollapsingHeader("Post Shader")) {
                         ImGui::Checkbox("Depth Buffer", &depthBuffer);
                         ImGui::SliderFloat("Exposure", &exposure, 0.0f, 10.0f);
@@ -312,17 +312,13 @@ int main() {
                         }
 
                 ImGui::End();
-            
 
-            glUseProgram(regularShader.getID());
-            glUniform3fv(glGetUniformLocation(regularShader.getID(), "lightDirection"), 1, glm::value_ptr(glm::vec3(sunPosX, sunPosY, sunPosZ)));
-            glUniform3fv(glGetUniformLocation(regularShader.getID(), "objectColor"), 1, glm::value_ptr(objectColor));
-            glUniform3fv(glGetUniformLocation(regularShader.getID(), "ambientColor"), 1, glm::value_ptr(ambientColor));
-            glUniform3fv(glGetUniformLocation(regularShader.getID(), "lightColor"), 1, glm::value_ptr(lightColor));
+                ImGui::Render();
+                ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-            ImGui::Render();
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-            #pragma endregion
+                #pragma endregion
+
+        }
 
         window.swap_buffers();
 

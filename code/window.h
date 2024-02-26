@@ -29,6 +29,9 @@ struct Window {
 
     Window(int width, int height, const char* title, bool fullscreen) 
         : width(width), height(height), title(title), fullscreen(fullscreen) {
+
+        HWND hwnd = GetConsoleWindow();
+        ShowWindow(hwnd, SW_HIDE); // Hide the console window
         
         #pragma region Initialize GLFW and create window
             if (!glfwInit()) {

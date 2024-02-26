@@ -28,84 +28,83 @@ void check_gl_errors() {
         }
     }
 
-class Shader {
-    public:
-        Shader(const std::string& vertexPath, const std::string& fragmentPath) {
-            unsigned int vertexShader = compileShader(GL_VERTEX_SHADER, loadShaderSource(vertexPath));
-            unsigned int fragmentShader = compileShader(GL_FRAGMENT_SHADER, loadShaderSource(fragmentPath));
-            id = linkShaders(vertexShader, fragmentShader); // Combines and links the shaders into a single shader program
-            glDeleteShader(vertexShader);
-            glDeleteShader(fragmentShader);
-            }
+struct Shader {
 
-        ~Shader() { 
-            glDeleteProgram(id); 
-            }
+    ~Shader() { glDeleteProgram(id); }
+    void bind() const { glUseProgram(id); }
+    void unbind() const { glUseProgram(0); }
+    unsigned int id;
+    void setInt(const char* name, int value) const {
+        glUniform1i(glGetUniformLocation(id, name), value);
+    }
+    void setFloat(const char* name, float value) const {
+        glUniform1f(glGetUniformLocation(id, name), value);
+    }
+    void setVec3(const char* name, float x, float y, float z) const {
+        glUniform3f(glGetUniformLocation(id, name), x, y, z);
+    }
+    void setMat4(const char* name, const glm::mat4& matrix) const {
+        glUniformMatrix4fv(glGetUniformLocation(id, name), 1, GL_FALSE, glm::value_ptr(matrix));
+    }
 
-        void bind() const {
-            glUseProgram(id);
-            }
+    Shader(const std::string& vertexPath, const std::string& fragmentPath) {
+        unsigned int vertexShader = compileShader(GL_VERTEX_SHADER, loadShaderSource(vertexPath));
+        unsigned int fragmentShader = compileShader(GL_FRAGMENT_SHADER, loadShaderSource(fragmentPath));
+        id = linkShaders(vertexShader, fragmentShader); // Combines and links the shaders into a single shader program
+        glDeleteShader(vertexShader);
+        glDeleteShader(fragmentShader);
+    }
 
-        void unbind() const {
-            glUseProgram(0);
-            }
-
-        unsigned int getID() const {
-            return id;
-            }
-    private:
-        unsigned int id;
-        const char* loadShaderSource(const std::string& filepath) const {
-            std::ifstream file(filepath);
-            if (!file.is_open()) {
-                std::cerr << "Failed to open shader file: " << filepath << std::endl;
-                return nullptr;
-                }
-
-            std::stringstream buffer;
-            buffer << file.rdbuf();
-
-            std::string sourceString = buffer.str();
-            char* source = new char[sourceString.size() + 1];
-            std::copy(sourceString.begin(), sourceString.end(), source);
-            source[sourceString.size()] = '\0'; // Null-terminate the string
-
-            return source;
-            }
-
-        unsigned int compileShader(unsigned int type, const char* source) const {
-            unsigned int shaderID = glCreateShader(type);
-            glShaderSource(shaderID, 1, &source, nullptr);
-            glCompileShader(shaderID);
-
-            int success;
-            glGetShaderiv(shaderID, GL_COMPILE_STATUS, &success);
-            if (!success) {
-                char infoLog[512];
-                glGetShaderInfoLog(shaderID, 512, nullptr, infoLog);
-                std::cerr << "Shader compilation failed:\n" << infoLog << std::endl;
-                }
-
-            return shaderID;
-            }
-
-        unsigned int linkShaders(unsigned int vertexShader, unsigned int fragmentShader) const {
-            unsigned int programID = glCreateProgram();
-            glAttachShader(programID, vertexShader);
-            glAttachShader(programID, fragmentShader);
-            glLinkProgram(programID);
-
-            int success;
-            glGetProgramiv(programID, GL_LINK_STATUS, &success);
-            if (!success) {
-                char infoLog[512];
-                glGetProgramInfoLog(programID, 512, nullptr, infoLog);
-                std::cerr << "Shader program linking failed:\n" << infoLog << std::endl;
-            }
-
-            return programID;
+    const char* loadShaderSource(const std::string& filepath) const {
+        std::ifstream file(filepath);
+        if (!file.is_open()) {
+            std::cerr << "Failed to open shader file: " << filepath << std::endl;
+            return nullptr;
         }
-    };
+
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+
+        std::string sourceString = buffer.str();
+        char* source = new char[sourceString.size() + 1];
+        std::copy(sourceString.begin(), sourceString.end(), source);
+        source[sourceString.size()] = '\0'; // Null-terminate the string
+
+        return source;
+    }
+    unsigned int compileShader(unsigned int type, const char* source) const {
+        unsigned int shaderID = glCreateShader(type);
+        glShaderSource(shaderID, 1, &source, nullptr);
+        glCompileShader(shaderID);
+
+        int success;
+        glGetShaderiv(shaderID, GL_COMPILE_STATUS, &success);
+        if (!success) {
+            char infoLog[512];
+            glGetShaderInfoLog(shaderID, 512, nullptr, infoLog);
+            std::cerr << "Shader compilation failed:\n" << infoLog << std::endl;
+        }
+
+        return shaderID;
+    }
+    unsigned int linkShaders(unsigned int vertexShader, unsigned int fragmentShader) const {
+        unsigned int programID = glCreateProgram();
+        glAttachShader(programID, vertexShader);
+        glAttachShader(programID, fragmentShader);
+        glLinkProgram(programID);
+
+        int success;
+        glGetProgramiv(programID, GL_LINK_STATUS, &success);
+        if (!success) {
+            char infoLog[512];
+            glGetProgramInfoLog(programID, 512, nullptr, infoLog);
+            std::cerr << "Shader program linking failed:\n" << infoLog << std::endl;
+        }
+
+        return programID;
+    }
+
+};
 
 struct Texture { 
 
@@ -220,7 +219,6 @@ struct Texture {
     };
 
 struct Mesh {
-    
     struct Vertex { float x, y, z, u, v, nx, ny, nz; };
     struct Triangle { unsigned int a, b, c; };
     std::vector<Vertex> vertices;
@@ -406,7 +404,6 @@ struct Mesh {
     };
 
 struct Camera {
-    
     glm::vec3 position = glm::vec3(0.0f, 20.0f, -40.0f);
     glm::vec3 target = glm::vec3(0.0f, 0.0f, -20.0f);
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -428,68 +425,44 @@ struct Camera {
     glm::mat4 projectionMatrix() {
         return glm::perspective(glm::radians(fov), aspectRatio, nearPlane, farPlane);
     };
-
 };
 
-class Framebuffer {
-    public:
-        Framebuffer(int width, int height) : m_width(width), m_height(height) {
-            // Create framebuffer object
-            glGenFramebuffers(1, &m_fbo);
-            glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+struct Framebuffer {
+    GLuint fbo;
+    GLuint color_texture;
+    GLuint depth_texture;
+    int width;
+    int height;
+    void bind() { glBindFramebuffer(GL_FRAMEBUFFER, fbo); }
+    void unbind() { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
 
-            // Create color texture attachment
-            glGenTextures(1, &m_color_texture);
-            glBindTexture(GL_TEXTURE_2D, m_color_texture);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_color_texture, 0);
+    Framebuffer(int width, int height) : width(width), height(height) {
+        glGenFramebuffers(1, &fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-            // Create depth texture attachment
-            glGenTextures(1, &m_depth_texture);
-            glBindTexture(GL_TEXTURE_2D, m_depth_texture);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depth_texture, 0);
+        glGenTextures(1, &color_texture);
+        glBindTexture(GL_TEXTURE_2D, color_texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color_texture, 0);
 
-            // Check framebuffer completeness
-            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-                std::cerr << "Framebuffer is not complete!" << std::endl;
-            }
+        glGenTextures(1, &depth_texture);
+        glBindTexture(GL_TEXTURE_2D, depth_texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_texture, 0);
 
-            // Unbind framebuffer
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            std::cerr << "Framebuffer is not complete!" << std::endl;
         }
 
-        ~Framebuffer() {
-            // Delete framebuffer and texture
-            glDeleteFramebuffers(1, &m_fbo);
-            glDeleteTextures(1, &m_color_texture);
-            glDeleteTextures(1, &m_depth_texture);
-        }
-
-        void bind() {
-            glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-        }
-
-        void unbind() {
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        }
-
-        GLuint getColorTexture() const {
-            return m_color_texture;
-        }
-
-        GLuint getDepthTexture() const {
-            return m_depth_texture;
-        }
-
-    private:
-        GLuint m_fbo;
-        GLuint m_color_texture;
-        GLuint m_depth_texture;
-        int m_width;
-        int m_height;
-    };
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+    ~Framebuffer() {
+        glDeleteFramebuffers(1, &fbo);
+        glDeleteTextures(1, &color_texture);
+        glDeleteTextures(1, &depth_texture);
+    }
+};
