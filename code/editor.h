@@ -10,7 +10,7 @@
 
 struct Editor {
 
-    Window window;
+    Window& window;
     Camera& camera; 
     Maze& maze;
     float& sunX;
@@ -167,8 +167,10 @@ struct Editor {
                 ImGui::SliderFloat("Strength", &occlusionStrength, 0.0f, 100.0f);
                 }
         }
-
-        //std::cout << "FPS: " << 1.0 / window.delta_time << std::endl;
+        
+        if (ImGui::CollapsingHeader("Performance")) {
+            ImGui::Text("FPS: %.1f", 1 / window.delta_time);
+            }
 
         ImGui::End();
 
