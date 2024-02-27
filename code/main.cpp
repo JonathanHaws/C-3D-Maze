@@ -44,7 +44,7 @@ int main() {
     Mesh feild("meshes/feild.obj");
     Mesh quad("meshes/quad.obj");
     Mesh sword("meshes/sword.obj");
-    Maze maze(64, 64, 5.0);
+    Maze maze(64, 64, 5.0, camera);
     Editor editor(window, camera, maze, sunX, sunY, sunZ, objectColor, ambientColor, lightColor, depthBuffer, exposure, gamma, fog, fog_distance, fog_falloff, fog_color, blur, blurRadius, ambientOcclusion, occlusionBuffer, occlusionRadius, occlusionThreshold, occlusionStrength);
 
     while (window.is_open()) {
@@ -117,16 +117,6 @@ int main() {
         mazeShader.setMat4("Projection", camera.projectionMatrix());
         
         feild.draw();
-
-        GLuint modelUniformLocation = glGetUniformLocation(mazeShader.id, "Model");
-        glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(20.0f));
-        glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 50.0f, 0.0f));
-        glm::mat4 transformMatrix = translationMatrix * scaleMatrix;
-        glUniformMatrix4fv(modelUniformLocation, 1, GL_FALSE, glm::value_ptr(transformMatrix));
-
-        maze.texture.bind(0);
-        glUniform1i(glGetUniformLocation(postShader.id, "texture_diffuse1"), 0);
-        quad.draw();
 
         stone.bind(0);
         mazeShader.bind();

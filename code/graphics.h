@@ -420,9 +420,36 @@ struct Camera {
     glm::mat4 viewMatrix() {
         return glm::lookAt(position, target, up);
     }
-    glm::mat4 projectionMatrix() {
-        return glm::perspective(glm::radians(fov), aspectRatio, nearPlane, farPlane);
-    };
+    glm::mat4 projectionMatrix(bool isPerspective = true) {
+        if (isPerspective) {
+            return glm::perspective(glm::radians(fov), aspectRatio, nearPlane, farPlane);
+        } else {
+            float orthoLeft = -2.0f;
+            float orthoRight = 2.0f;
+            float orthoBottom = -2.0f;
+            float orthoTop = 2.0f;
+            
+            float halfWidth = (orthoRight - orthoLeft) * 0.5f;
+            float halfHeight = (orthoTop - orthoBottom) * 0.5f;
+            
+            float aspect = aspectRatio;
+            if (aspect >= 1.0f) {
+                // Adjust width
+                halfWidth *= aspect;
+            } else {
+                // Adjust height
+                halfHeight /= aspect;
+            }
+            
+            orthoLeft = -halfWidth;
+            orthoRight = halfWidth;
+            orthoBottom = -halfHeight;
+            orthoTop = halfHeight;
+            
+            return glm::ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, nearPlane, farPlane);
+        }
+    }
+
 };
 
 struct Framebuffer {

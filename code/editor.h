@@ -13,6 +13,7 @@ struct Editor {
     Window& window;
     Camera& camera; 
     Maze& maze;
+    bool drawMazeTexture = true;
     float& sunX;
     float& sunY;
     float& sunZ;
@@ -33,6 +34,7 @@ struct Editor {
     int& occlusionRadius;
     float& occlusionThreshold;
     float& occlusionStrength;
+
 
     Editor (Window& window, 
             Camera& camera, 
@@ -119,6 +121,10 @@ struct Editor {
             }
 
         if (ImGui::CollapsingHeader("Maze")) {
+            ImGui::Checkbox("Texture", &drawMazeTexture);
+            if (drawMazeTexture) {
+                maze.drawTexture();
+                }
             ImGui::SliderInt("Width", &maze.width, 1, 2048);
             ImGui::SliderInt("Height", &maze.height, 1, 2048);
             ImGui::SliderFloat("Speed", &maze.speed, 0.0f, 5000.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);

@@ -27,8 +27,8 @@ void main() {
         }
    
     mat4 instancedModel = mat4(1.0);
-    instancedModel[3].x = (posX * 2.0) - (mazeWidth / 2);
-    instancedModel[3].z = (posZ * 2.0) - (mazeHeight / 2);
+    instancedModel[3].x = ((posX - mazeWidth / 2) * 2.0);
+    instancedModel[3].z = ((posZ - mazeHeight / 2) * 2.0);
 
     mat4 MV = View * instancedModel;
     gl_Position = Projection * MV * vec4(aPos, 1.0);

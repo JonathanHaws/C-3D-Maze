@@ -13,18 +13,27 @@ struct Maze {
     int height = 0; 
     float timer = 0.0f; 
     float speed = 0.0f;
+    Camera& camera;
     std::stack<std::pair<int, int>> cells_to_expand; 
     std::vector<std::vector<char>> corridors;
     Mesh wall; 
     Texture texture;
     GLuint instanceBuffer = 0; 
+    Shader shader2d;
+    Shader mazeShader;
+    Mesh quad;
 
-    Maze(int width, int height, float speed):
+    Maze(int width, int height, float speed, Camera& camera):
         width(width),
         height(height),
         speed(speed),
         texture(width, height),
-        wall("meshes/cube.obj") {
+        camera(camera),
+        wall("meshes/cube.obj"),
+        shader2d("shaders/2d_v.glsl", "shaders/2d_f.glsl"),
+        mazeShader("shaders/maze_v.glsl", "shaders/maze_f.glsl"),
+        quad("meshes/quad.obj")
+        {
         corridors.resize(width, std::vector<char>(height, '#'));
         updateTextureFromCorridors();
         }
@@ -103,12 +112,27 @@ struct Maze {
         }
 
     void tick(float deltaTime) {
+        
+
         timer += speed * deltaTime;
         while (timer > 1) {
             expand();
             timer --;
             }
         }      
+
+    void drawTexture() {
+        shader2d.bind();
+        texture.bind(0);
+        glm::mat4 stopclipmodel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -0.5f));
+        shader2d.setMat4("Model", stopclipmodel);
+        shader2d.setMat4("View", glm::mat4(1.0f));
+        shader2d.setMat4("Projection", camera.projectionMatrix(false));
+        glUniform1i(glGetUniformLocation(shader2d.id, "texture_diffuse1"), 0);
+        quad.draw();
+        shader2d.setMat4("Projection", camera.projectionMatrix(true));
+        shader2d.unbind();
+    }
 
     void draw() {
 
@@ -121,7 +145,7 @@ struct Maze {
         glUniform1i(glGetUniformLocation(currentProgram, "corridorsTexture"), 1);
 
         wall.draw(width * height);
-        
-        }
 
-    };
+    }
+        
+};
