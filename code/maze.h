@@ -20,7 +20,6 @@ struct Maze {
     Texture texture;
     GLuint instanceBuffer = 0; 
     Shader shader2d;
-    Shader mazeShader;
     Mesh quad;
 
     Maze(int width, int height, float speed, Camera& camera):
@@ -30,8 +29,7 @@ struct Maze {
         texture(width, height),
         camera(camera),
         wall("meshes/cube.obj"),
-        shader2d("shaders/2d_v.glsl", "shaders/2d_f.glsl"),
-        mazeShader("shaders/maze_v.glsl", "shaders/maze_f.glsl"),
+        shader2d("shaders/2d.glsl"),
         quad("meshes/quad.obj")
         {
         corridors.resize(width, std::vector<char>(height, '#'));

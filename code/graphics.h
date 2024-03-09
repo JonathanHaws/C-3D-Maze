@@ -44,15 +44,28 @@ struct Shader {
     void setMat4(const char* name, const glm::mat4& matrix) const {
         glUniformMatrix4fv(glGetUniformLocation(id, name), 1, GL_FALSE, glm::value_ptr(matrix));
     }
+    Shader(const std::string& filepath) {
+        std::string vertexSource, fragmentSource;
+        std::string source = loadShaderSource(filepath);
+        parseShaderSource(source, vertexSource, fragmentSource);
 
-    Shader(const std::string& vertexPath, const std::string& fragmentPath) {
-        unsigned int vertexShader = compileShader(GL_VERTEX_SHADER, loadShaderSource(vertexPath));
-        unsigned int fragmentShader = compileShader(GL_FRAGMENT_SHADER, loadShaderSource(fragmentPath));
+        unsigned int vertexShader = compileShader(GL_VERTEX_SHADER, vertexSource.c_str());
+        unsigned int fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragmentSource.c_str());
         id = linkShaders(vertexShader, fragmentShader); // Combines and links the shaders into a single shader program
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
     }
+    void parseShaderSource(const std::string& shaderSource, std::string& vertexSource, std::string& fragmentSource) const {
+        size_t vertexPos = shaderSource.find("// Vertex");
+        size_t fragmentPos = shaderSource.find("// Fragment");
 
+        if (vertexPos != std::string::npos && fragmentPos != std::string::npos) {
+            vertexSource = shaderSource.substr(vertexPos, fragmentPos - vertexPos);
+            fragmentSource = shaderSource.substr(fragmentPos);
+        } else {
+            std::cerr << "Shader section not found in source, should be a '// Vertex' and '// Fragment'" << std::endl;
+        }
+    }
     const char* loadShaderSource(const std::string& filepath) const {
         std::ifstream file(filepath);
         if (!file.is_open()) {

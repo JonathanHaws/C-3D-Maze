@@ -1,21 +1,30 @@
+// Vertex
 #version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec2 aTexCoord;
+layout (location = 2) in vec3 aNormal; 
+out vec2 TexCoord;
+out vec3 Normal;
 
+void main() {
+    gl_Position = vec4(aPos * 1, 1.0); // Scale down the position by half
+    TexCoord = aTexCoord;
+    Normal = aNormal;
+}
+
+// Fragment
+#version 330 core
 in vec2 TexCoord;
 out vec4 FragColor;
-
 uniform sampler2D colorTexture;
 uniform sampler2D depthTexture;
-
 uniform bool fog;
 uniform float fog_distance;
 uniform float fog_falloff;
 uniform vec3 fog_color;
-
 uniform bool depthBuffer;
-
 uniform bool blur;
 uniform int blurRadius;
-
 uniform bool ambientOcclusion;
 uniform bool occlusionBuffer;
 uniform int occlusionRadius;

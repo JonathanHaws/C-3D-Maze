@@ -35,9 +35,9 @@ int main() {
     Camera camera; 
     Window window(1920, 1080, "Maze", true);
     Framebuffer framebuffer(1920, 1080);
-    Shader regularShader("shaders/regular_v.glsl", "shaders/regular_f.glsl");
-    Shader postShader("shaders/post_v.glsl", "shaders/post_f.glsl");
-    Shader mazeShader("shaders/maze_v.glsl", "shaders/maze_f.glsl");
+    Shader regularShader("shaders/regular.glsl");
+    Shader postShader("shaders/post.glsl");
+    Shader mazeShader("shaders/maze.glsl");
     Texture grass("textures/grass.bmp");
     Texture stone("textures/stone.bmp");     
     Mesh wall("meshes/cube.obj");
