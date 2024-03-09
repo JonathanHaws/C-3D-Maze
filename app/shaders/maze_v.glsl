@@ -20,7 +20,8 @@ void main() {
     int posX = instanceIndex % mazeWidth;
     int posZ = instanceIndex / mazeWidth;  
 
-    vec4 texColor = texture(corridorsTexture, vec2(float(posX) / float(mazeWidth), float(posZ) / float(mazeHeight)));
+    vec2 texCoord = vec2((float(posX) + 0.5) / float(mazeWidth), (float(posZ) + 0.5) / float(mazeHeight));
+    vec4 texColor = texture(corridorsTexture, texCoord);
     if (texColor.r == 0) {
         gl_Position = vec4(0.0);
         return;
