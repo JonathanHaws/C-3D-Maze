@@ -1,10 +1,8 @@
 #pragma once 
-
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
-#include <glm/glm.hpp>
-#include <window.h>
+#include <libs/IMGUI/imgui.h>
+#include <libs/IMGUI/imgui_impl_glfw.h>
+#include <libs/IMGUI/imgui_impl_opengl3.h>
+#include <libs/GLM/glm.hpp>
 #include <graphics.h>
 #include <maze.h>
 

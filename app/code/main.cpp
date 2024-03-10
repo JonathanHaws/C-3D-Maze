@@ -1,12 +1,11 @@
 
 #include <iostream>
 #include <sstream>
-#include <window.h>
+#include <libs/GLM/glm.hpp>
 #include <graphics.h>
-#include <glm/glm.hpp>
 #include <maze.h>
 #include <editor.h>
-#include <audio.h>
+#include <sound.h>
 
 int main() {
 
