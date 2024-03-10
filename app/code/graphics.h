@@ -6,10 +6,10 @@
 #include <vector>
 #include <windows.h>
 #include <unordered_map>
-#include <libs/GLEW/glew.h>
+#include <libs/GL/glew.h>
 #include <libs/GLFW/glfw3.h>
-#include <libs/GLM/glm.hpp>
-#include <libs/GLM/gtc/type_ptr.hpp>
+#include <libs/glm/glm.hpp>
+#include <libs/glm/gtc/type_ptr.hpp>
 
 #pragma region Window 
     
@@ -597,13 +597,13 @@ struct Mesh {
     };
 
 struct Camera {
-    glm::vec3 position = glm::vec3(0.0f, 20.0f, -40.0f);
-    glm::vec3 target = glm::vec3(0.0f, 0.0f, -20.0f);
+    glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 target = glm::vec3(0.0f, 0.0f, -1.0f);
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
     float fov = 80.0f;
     float aspectRatio = 1280.0f / 720.0f;
     float nearPlane = 0.1f;
-    float farPlane = 1000.0f;
+    float farPlane = 100000.0f;
     float pitch() { 
         return glm::degrees(asin(glm::normalize(target - position).y)); 
         }
@@ -644,6 +644,18 @@ struct Camera {
             return glm::ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, nearPlane, farPlane);
         }
     }
+    void set_position(float x, float y, float z) {
+        position = glm::vec3(x, y, z);
+    }
+    void set_target(float x, float y, float z) {
+        target = glm::vec3(x, y, z);
+    }
+
+    Camera(float fov, float aspectRatio, float nearPlane, float farPlane) 
+        : fov(fov), aspectRatio(aspectRatio), nearPlane(nearPlane), farPlane(farPlane) {
+
+
+        }
 
 };
 

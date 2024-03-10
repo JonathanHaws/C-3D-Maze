@@ -1,7 +1,7 @@
 
 #include <iostream>
 #include <sstream>
-#include <libs/GLM/glm.hpp>
+#include <libs/glm/glm.hpp>
 #include <graphics.h>
 #include <maze.h>
 #include <editor.h>
@@ -16,9 +16,9 @@ int main() {
     glm::vec3 ambientColor = glm::vec3(0.251f, 0.316f, 0.324f);
     glm::vec3 lightColor = glm::vec3(0.853f, 0.609f, 0.418f);
     bool fog = true;
-    float fog_distance = 0.2f;
-    float fog_falloff = 0.8f;
-    glm::vec3 fog_color = glm::vec3(0.059f, 0.059f, 0.059f);
+    float fog_distance = 0.9f;
+    float fog_falloff = 0.15f;
+    glm::vec3 fog_color = glm::vec3(0.833f, 0.833f, 0.833f);
     bool blur = false;
     int blurRadius = 3;
     bool ambientOcclusion = false;
@@ -31,7 +31,9 @@ int main() {
     float gamma = 1.0f;
 
     Audio audio;
-    Camera camera; 
+    Camera camera(80.0f, 1920.0f / 1080.0f, 0.1f, 10000.0f); 
+    camera.set_position(0, 200, -200);
+    camera.set_target(0, 0, 0);
     Window window(1920, 1080, "Maze", true);
     Framebuffer framebuffer(1920, 1080);
     Shader regularShader("shaders/regular.glsl");
@@ -43,7 +45,7 @@ int main() {
     Mesh feild("meshes/feild.obj");
     Mesh quad("meshes/quad.obj");
     Mesh sword("meshes/sword.obj");
-    Maze maze(54, 54, 5.0, camera);
+    Maze maze(512, 512, 5.0, camera);
     Editor editor(window, camera, maze, sunX, sunY, sunZ, objectColor, ambientColor, lightColor, depthBuffer, exposure, gamma, fog, fog_distance, fog_falloff, fog_color, blur, blurRadius, ambientOcclusion, occlusionBuffer, occlusionRadius, occlusionThreshold, occlusionStrength);
 
     while (window.is_open()) {

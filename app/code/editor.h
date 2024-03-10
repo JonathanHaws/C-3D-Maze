@@ -1,8 +1,8 @@
 #pragma once 
-#include <libs/IMGUI/imgui.h>
-#include <libs/IMGUI/imgui_impl_glfw.h>
-#include <libs/IMGUI/imgui_impl_opengl3.h>
-#include <libs/GLM/glm.hpp>
+#include <libs/imgui/imgui.h>
+#include <libs/imgui/imgui_impl_glfw.h>
+#include <libs/imgui/imgui_impl_opengl3.h>
+#include <libs/glm/glm.hpp>
 #include <graphics.h>
 #include <maze.h>
 
@@ -11,7 +11,7 @@ struct Editor {
     Window& window;
     Camera& camera; 
     Maze& maze;
-    bool drawMazeTexture = true;
+    bool drawMazeTexture = false;
     float& sunX;
     float& sunY;
     float& sunZ;
