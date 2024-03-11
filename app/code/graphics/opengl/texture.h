@@ -5,9 +5,9 @@
 #include <string>
 #include <vector>
 #include <windows.h>
-#include <libs/GL/glew.h>
+#include "GL/glew.h"
 #define STB_IMAGE_IMPLEMENTATION
-#include <libs/loaders/stb_image.h>
+#include "../loaders/stb_image.h"
 
 struct Texture {
     

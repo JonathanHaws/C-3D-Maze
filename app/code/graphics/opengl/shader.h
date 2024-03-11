@@ -4,7 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <windows.h>
-#include <libs/GL/glew.h>
+#include "GL/glew.h"
 
 struct Shader {
 
