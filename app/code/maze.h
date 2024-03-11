@@ -38,7 +38,7 @@ struct Maze {
     void updateTextureFromCorridors(int xoffset = 0, int yoffset = 0, int width = -1, int height = -1) {
         std::vector<unsigned char> textureData;
 
-        //Determine the range of cells to update based on the provided parameters
+        // Determine the range of cells to update based on the provided parameters
         int endX = (width == -1) ? this->width : ((xoffset + width < this->width) ? (xoffset + width) : this->width);
         int endY = (height == -1) ? this->height : ((yoffset + height < this->height) ? (yoffset + height) : this->height);
 
@@ -56,7 +56,11 @@ struct Maze {
             }
         }
 
-        texture.updateTexture(textureData, xoffset, yoffset, width, height);
+        // Convert vector to const char*
+        const char* imageDataPtr = reinterpret_cast<const char*>(textureData.data());
+
+        // Call the updateTexture function
+        texture.updateTexture(imageDataPtr, xoffset, yoffset, width, height);
     }
 
     void reset() {
