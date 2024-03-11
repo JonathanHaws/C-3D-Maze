@@ -1,11 +1,11 @@
 
 #include <iostream>
 #include <sstream>
-#include <libs/glm/glm.hpp>
-#include <graphics.h>
-#include <maze.h>
-#include <editor.h>
-#include <sound.h>
+#include "libs/glm/glm.hpp"
+#include "graphics/graphics.h"
+#include "maze.h"
+#include "editor.h"
+#include "sound.h"
 
 int main() {
 

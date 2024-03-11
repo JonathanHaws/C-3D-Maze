@@ -3,7 +3,7 @@
 #include <libs/imgui/imgui_impl_glfw.h>
 #include <libs/imgui/imgui_impl_opengl3.h>
 #include <libs/glm/glm.hpp>
-#include <graphics.h>
+#include <graphics/graphics.h>
 #include <maze.h>
 
 struct Editor {
