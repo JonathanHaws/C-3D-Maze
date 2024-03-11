@@ -15,6 +15,7 @@ struct Editor {
     float& sunX;
     float& sunY;
     float& sunZ;
+    glm::vec3& skyColor;
     glm::vec3& objectColor;
     glm::vec3& ambientColor;
     glm::vec3& lightColor;
@@ -33,12 +34,11 @@ struct Editor {
     float& occlusionThreshold;
     float& occlusionStrength;
 
-
     Editor (Window& window, 
             Camera& camera, 
             Maze& maze, 
             float& sunX, float& sunY, float& sunZ, 
-            glm::vec3& objectColor, glm::vec3& ambientColor, glm::vec3& lightColor, 
+            glm::vec3& skyColor, glm::vec3& objectColor, glm::vec3& ambientColor, glm::vec3& lightColor, 
             bool& depthBuffer, float& exposure, float& gamma,
             bool& fog, float& fog_distance, float& fog_falloff, glm::vec3& fog_color,
             bool& blur, int& blurRadius,
@@ -46,11 +46,12 @@ struct Editor {
             ):
             window(window), camera(camera), maze(maze), 
             sunX(sunX), sunY(sunY), sunZ(sunZ), 
-            objectColor(objectColor), ambientColor(ambientColor), lightColor(lightColor),
+            skyColor(skyColor), objectColor(objectColor), ambientColor(ambientColor), lightColor(lightColor),
             depthBuffer(depthBuffer), exposure(exposure), gamma(gamma),
             fog(fog), fog_distance(fog_distance), fog_falloff(fog_falloff), fog_color(fog_color),
             blur(blur), blurRadius(blurRadius),
             ambientOcclusion(ambientOcclusion), occlusionBuffer(occlusionBuffer), occlusionRadius(occlusionRadius), occlusionThreshold(occlusionThreshold), occlusionStrength(occlusionStrength)
+
             {
 
         ImGui::CreateContext();
@@ -141,6 +142,7 @@ struct Editor {
             ImGui::SliderFloat("Sun Y", &sunY, 1.0f, 10.0f);
             ImGui::SliderFloat("Sun Z", &sunZ, -10.0f, 10.0f);
 
+            ImGui::ColorEdit3("Sky Color", glm::value_ptr(skyColor));
             ImGui::ColorEdit3("Object Color", glm::value_ptr(objectColor));
             ImGui::ColorEdit3("Ambient Color", glm::value_ptr(ambientColor));
             ImGui::ColorEdit3("Light Color", glm::value_ptr(lightColor));

@@ -11,14 +11,15 @@ int main() {
 
     float sunX = 0.1f;
     float sunY = 1.0f;
-    float sunZ = 0.1f;    
+    float sunZ = 0.1f;   
+    glm::vec3 skyColor = glm::vec3(0.529f, 0.676f, 0.701f); 
     glm::vec3 objectColor = glm::vec3(1.000f, 1.000f, 1.000f);
     glm::vec3 ambientColor = glm::vec3(0.251f, 0.316f, 0.324f);
     glm::vec3 lightColor = glm::vec3(0.853f, 0.609f, 0.418f);
     bool fog = true;
     float fog_distance = 0.9f;
     float fog_falloff = 0.15f;
-    glm::vec3 fog_color = glm::vec3(0.833f, 0.833f, 0.833f);
+    glm::vec3 fog_color = glm::vec3(0.529f, 0.676f, 0.701f);
     bool blur = false;
     int blurRadius = 3;
     bool ambientOcclusion = false;
@@ -39,14 +40,14 @@ int main() {
     Shader regularShader("shaders/regular.glsl");
     Shader postShader("shaders/post.glsl");
     Shader mazeShader("shaders/maze.glsl");
-    Texture grass("textures/grass.bmp");
+    Texture grass("textures/grass.jpg");
     Texture stone("textures/stone.bmp");     
     Mesh wall("meshes/cube.obj");
     Mesh feild("meshes/feild.obj");
     Mesh quad("meshes/quad.obj");
     Mesh sword("meshes/sword.obj");
     Maze maze(512, 512, 5.0, camera);
-    Editor editor(window, camera, maze, sunX, sunY, sunZ, objectColor, ambientColor, lightColor, depthBuffer, exposure, gamma, fog, fog_distance, fog_falloff, fog_color, blur, blurRadius, ambientOcclusion, occlusionBuffer, occlusionRadius, occlusionThreshold, occlusionStrength);
+    Editor editor(window, camera, maze, sunX, sunY, sunZ, skyColor, objectColor, ambientColor, lightColor, depthBuffer, exposure, gamma, fog, fog_distance, fog_falloff, fog_color, blur, blurRadius, ambientOcclusion, occlusionBuffer, occlusionRadius, occlusionThreshold, occlusionStrength);
 
     while (window.is_open()) {
 
@@ -105,11 +106,11 @@ int main() {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
 
-        glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+        glClearColor(skyColor.r, skyColor.g, skyColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         framebuffer.bind();
-        glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+        glClearColor(skyColor.r, skyColor.g, skyColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         grass.bind(0);
