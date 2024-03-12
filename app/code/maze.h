@@ -1,9 +1,7 @@
 #pragma once
 #include <vector>
-#include <iostream>
 #include <stack>
 #include <random>
-#include "graphics/graphics.h"
 #include <algorithm> // shuffle random
 
 struct Maze {

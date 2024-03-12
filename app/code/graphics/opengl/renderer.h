@@ -18,8 +18,8 @@
 
 void clear_gl_errors() {
     while (glGetError() != GL_NO_ERROR);
-    }
-    
+};
+
 void check_gl_errors() {
     const GLubyte* version = glGetString(GL_VERSION);
     if (version) {
@@ -30,8 +30,8 @@ void check_gl_errors() {
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
         std::cerr << "OpenGL Error: " << err << std::endl;
-        }
-    }
+        };
+    };
 
 struct Framebuffer {
     
