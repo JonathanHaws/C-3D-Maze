@@ -1,3 +1,4 @@
+
 // Vertex
 #version 330 core
 layout (location = 0) in vec3 aPos;
@@ -10,7 +11,7 @@ void main() {
     gl_Position = vec4(aPos * 1, 1.0); // Scale down the position by half
     TexCoord = aTexCoord;
     Normal = aNormal;
-}
+    }
 
 // Fragment
 #version 330 core
@@ -30,11 +31,15 @@ uniform bool occlusionBuffer;
 uniform int occlusionRadius;
 uniform float occlusionThreshold;
 uniform float occlusionStrength;
+uniform float exposure;
+uniform float gamma;
 
 void main() {
     
     float depth = pow(texture(depthTexture, TexCoord).r, 1000);
     vec3 finalColor = texture(colorTexture, TexCoord).rgb;  
+
+    finalColor *= exposure;
 
     if (depthBuffer) {
         FragColor = vec4(vec3(depth), 1.0);
@@ -93,6 +98,9 @@ void main() {
         finalColor = mix(finalColor, fog_color, fog_amount);
         }
   
+    finalColor = pow(finalColor, vec3(1.0 / gamma));
+
     FragColor = vec4(finalColor, 1.0);
 
     }
+    

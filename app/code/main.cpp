@@ -137,6 +137,8 @@ int main() {
         framebuffer.unbind();
 
         postShader.bind();
+        postShader.setFloat("exposure", exposure);
+        postShader.setFloat("gamma", gamma);
         postShader.setInt("fog", fog);
         postShader.setFloat("fog_distance", fog_distance);
         postShader.setFloat("fog_falloff", fog_falloff);
