@@ -1,13 +1,4 @@
 #pragma once
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <windows.h>
-#include "GL/glew.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "../loaders/stb_image.h"
 
 struct Texture {
     

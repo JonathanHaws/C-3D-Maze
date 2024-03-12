@@ -7,6 +7,11 @@
 #include <windows.h>
 #include <libs/glm/glm.hpp>
 #include <libs/glm/gtc/type_ptr.hpp>
+#include "GL/glew.h"
+#pragma comment(lib, "graphics/opengl/GL/glew32s")
+#define STB_IMAGE_IMPLEMENTATION
+#include "../loaders/stb_image.h"
+
 #include "shader.h"
 #include "texture.h"
 #include "mesh.h"

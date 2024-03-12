@@ -1,15 +1,5 @@
 
 #pragma once
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <windows.h>
-#include <libs/glm/glm.hpp>
-#include <libs/glm/gtc/type_ptr.hpp>
-#include "shader.h"
-#include "texture.h"
 
 struct Mesh {
     

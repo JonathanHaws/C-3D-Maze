@@ -6,7 +6,6 @@
 
 struct Window {
 
-    // Input
     int mouse_delta_x;
     int mouse_delta_y;
     int mouse_previous_x;
@@ -14,7 +13,6 @@ struct Window {
     float delta_time, previous_time;
     std::unordered_map<int, int> previous_keys;
 
-    // Window
     float width;
     float height;
     const char* title;

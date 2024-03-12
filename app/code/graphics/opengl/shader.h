@@ -1,10 +1,5 @@
 
 #pragma once
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <windows.h>
-#include "GL/glew.h"
 
 struct Shader {
 

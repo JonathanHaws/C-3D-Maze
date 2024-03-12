@@ -5,7 +5,7 @@
 #include "graphics/graphics.h"
 #include "maze.h"
 #include "editor.h"
-#include "sound.h"
+#include "audio/sound.h"
 
 int main() {
 
