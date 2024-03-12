@@ -10,6 +10,8 @@ struct Maze {
     int height = 0; 
     float timer = 0.0f; 
     float speed = 0.0f;
+    bool loop = false; // If true, the maze will reset when it is complete
+    
     Camera& camera;
     std::stack<std::pair<int, int>> cells_to_expand; 
     std::vector<std::vector<char>> corridors;
@@ -19,12 +21,13 @@ struct Maze {
     Shader shader2d;
     Mesh quad;
 
-    Maze(int width, int height, float speed, Camera& camera):
+    Maze(int width, int height, float speed, Camera& camera, bool loop = false):
         width(width),
         height(height),
         speed(speed),
         texture(width, height),
         camera(camera),
+        loop(loop), 
         wall("meshes/cube.obj"),
         shader2d("shaders/2d.glsl"),
         quad("meshes/quad.obj")
@@ -59,7 +62,7 @@ struct Maze {
 
         // Call the updateTexture function
         texture.updateTexture(imageDataPtr, xoffset, yoffset, width, height);
-    }
+        }
 
     void reset() {
         corridors.clear();
@@ -68,19 +71,29 @@ struct Maze {
         updateTextureFromCorridors();
         }
 
+    void expand_all() { // Instantly expand the entire maze
+        while (!cells_to_expand.empty()) {
+            expand();
+            }
+        }
     void expand() {
 
-        if (corridors.size() != width || corridors[0].size() != height) { // Avoid acessing out of bounds for cells_to_expand stack and corridors vector
+        if (corridors.size() != width || corridors[0].size() != height) { // Avoid acessing out of bounds for stack and corridors
             texture.resize(width, height);
             reset();
             }
 
-        if(width< 3 || height < 3) { return; } // Maze is too small to expand (bandaid fix somewhere else in this function acessing out of bounds I think)
+        if (width < 3 || height < 3) { return; } // Maze is too small to expand (bandaid fix needs to be fixed)
         
         if (cells_to_expand.empty()) { 
-            if (corridors[1][1] == ' ') { return; } //Maze is complete
+            
+            if (corridors[1][1] == ' ') { // Maze is complete
+                if (loop) { reset(); }
+                return;
+                } 
             cells_to_expand.push({1, 1}); // Maze is not Started
             }
+            
 
         struct Direction { int dx, dy; };
         std::vector<Direction> directions = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}}; // North South West East
@@ -102,7 +115,6 @@ struct Maze {
                     }
                 }
             }
-        
         
         corridors[cell.first][cell.second] = ' ';
         updateTextureFromCorridors(cell.first, cell.second, 1, 1);
@@ -131,7 +143,7 @@ struct Maze {
         quad.draw();
         shader2d.setMat4("Projection", camera.projectionMatrix(true));
         shader2d.unbind();
-    }
+        }
 
     void draw() {
 
@@ -145,6 +157,6 @@ struct Maze {
 
         wall.draw(width * height);
 
-    }
+        }
         
-};
+    };

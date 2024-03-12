@@ -77,22 +77,27 @@ struct Editor {
         style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.2f, 0.2f, 0.2f, 1.0f);
         style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.3f, 0.3f, 0.3f, 1.0f);
         style.Colors[ImGuiCol_CheckMark] = ImVec4(0.8f, 0.8f, 0.8f, 1.0f);
-    }
+        }
+    
     ~Editor() {
         ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
-    }
+        }
+    
     void begin_frame() {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-    }
+        }
+    
     void end_frame() {
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    }
+        }
+    
     void edit() {
+        
         begin_frame();
 
         ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always); // Set window position to top-left corner
@@ -103,15 +108,14 @@ struct Editor {
             ImGui::SetWindowCollapsed(!ImGui::IsWindowCollapsed());
             }        
 
-        if (ImGui::CollapsingHeader("Window")) {
-                
-                if (ImGui::MenuItem("Fullscreen")) {
-                    window.set_fullscreen(!window.is_fullscreen());
-                    }
-                if (ImGui::MenuItem("Exit")) {
-                    window.close();
-                    }
-                } 
+        if (ImGui::CollapsingHeader("Window")) {     
+            if (ImGui::MenuItem("Fullscreen")) {
+                window.set_fullscreen(!window.is_fullscreen());
+                }
+            if (ImGui::MenuItem("Exit")) {
+                window.close();
+                }
+            } 
 
         if (ImGui::CollapsingHeader("Camera")) {
             ImGui::SliderFloat("FOV", &camera.fov, 1.0f, 179.0f);
@@ -120,10 +124,6 @@ struct Editor {
             }
 
         if (ImGui::CollapsingHeader("Maze")) {
-            ImGui::Checkbox("Texture", &drawMazeTexture);
-            if (drawMazeTexture) {
-                maze.drawTexture();
-                }
             ImGui::SliderInt("Width", &maze.width, 1, 2048);
             ImGui::SliderInt("Height", &maze.height, 1, 2048);
             ImGui::SliderFloat("Speed", &maze.speed, 0.0f, 5000.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
@@ -134,6 +134,17 @@ struct Editor {
             if (ImGui::Button("Expand Once")) {
                 maze.expand();
                 maze.timer = 0.0f; // Reset the timer for maze expansion
+                }
+            ImGui::SameLine();
+            if (ImGui::Button("Expand All")) {
+                maze.loop = false;
+                maze.expand_all();
+                }
+
+            ImGui::Checkbox("Loop", &maze.loop);
+            ImGui::Checkbox("Texture", &drawMazeTexture);
+            if (drawMazeTexture) {
+                maze.drawTexture();
                 }
             }
 
@@ -146,7 +157,7 @@ struct Editor {
             ImGui::ColorEdit3("Object Color", glm::value_ptr(objectColor));
             ImGui::ColorEdit3("Ambient Color", glm::value_ptr(ambientColor));
             ImGui::ColorEdit3("Light Color", glm::value_ptr(lightColor));
-        }
+            }
 
         if (ImGui::CollapsingHeader("Post Shader")) {
             ImGui::Checkbox("Depth Buffer", &depthBuffer);
@@ -163,7 +174,7 @@ struct Editor {
             ImGui::Checkbox("Blur", &blur);
             if (blur) { 
                 ImGui::SliderInt("Blur Radius", &blurRadius, 1, 10); 
-            }
+                }
 
             ImGui::Checkbox("Ambient Occlusion", &ambientOcclusion);
             if (ambientOcclusion) { 
@@ -172,7 +183,7 @@ struct Editor {
                 ImGui::SliderFloat("Threshold", &occlusionThreshold, 0.0f, 1.0f);
                 ImGui::SliderFloat("Strength", &occlusionStrength, 0.0f, 100.0f);
                 }
-        }
+            }
         
         if (ImGui::CollapsingHeader("Performance")) {
             ImGui::Text("FPS: %.1f", 1 / window.delta_time);
@@ -181,6 +192,6 @@ struct Editor {
         ImGui::End();
 
         end_frame();
-    }
+        }
 
-};
+    };

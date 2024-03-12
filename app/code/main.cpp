@@ -46,7 +46,7 @@ int main() {
     Mesh feild("meshes/feild.obj");
     Mesh quad("meshes/quad.obj");
     Mesh sword("meshes/sword.obj");
-    Maze maze(512, 512, 5.0, camera);
+    Maze maze(512, 512, 1000.0, camera, true);
     Editor editor(window, camera, maze, sunX, sunY, sunZ, skyColor, objectColor, ambientColor, lightColor, depthBuffer, exposure, gamma, fog, fog_distance, fog_falloff, fog_color, blur, blurRadius, ambientOcclusion, occlusionBuffer, occlusionRadius, occlusionThreshold, occlusionStrength);
 
     while (window.is_open()) {
@@ -163,8 +163,9 @@ int main() {
         editor.edit();
         window.swap_buffers();
 
-    }
+        }
         
+    
     return 0;
  
-}
+    }
