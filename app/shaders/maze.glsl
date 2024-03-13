@@ -1,3 +1,4 @@
+
 // Vertex
 #version 330 core
 layout (location = 0) in vec3 aPos; 
@@ -31,6 +32,19 @@ void main() {
     gl_Position = Projection * MV * vec4(aPos, 1.0);
     TexCoord = aTexCoord;
     Normal = mat3(transpose(inverse(Model))) * aNormal;
+    }
+
+// Geometry (Default: Pass-through)
+#version 330 core
+layout(triangles) in;
+layout(triangle_strip, max_vertices = 3) out;
+
+void main() {
+    for (int i = 0; i < gl_in.length(); ++i) {
+        gl_Position = gl_in[i].gl_Position;
+        EmitVertex();
+    }
+    EndPrimitive();
 }
 
 // Fragment
@@ -43,6 +57,7 @@ uniform vec3 objectColor;
 uniform vec3 ambientColor;   
 uniform vec3 lightColor;     
 uniform vec3 lightDirection;
+
 void main() {
     vec3 ambient = ambientColor * objectColor;
     vec3 norm = normalize(Normal); // Use the normal vector passed from the vertex shader
@@ -52,4 +67,4 @@ void main() {
     vec3 finalColor = (ambient + diffuse) * texture(texture_diffuse1, TexCoord).rgb;
  
     FragColor = vec4(finalColor, 1.0);
-}
+    }

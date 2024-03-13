@@ -1,8 +1,6 @@
-
 #pragma once
 
 struct Shader {
-
     unsigned int id;
     
     ~Shader() { glDeleteProgram(id); }
@@ -28,26 +26,36 @@ struct Shader {
     }
     
     Shader(const std::string& filepath) {
-        std::string vertexSource, fragmentSource;
+        std::string vertexSource, fragmentSource, geometrySource; // Add geometrySource
         std::string source = loadShaderSource(filepath);
-        parseShaderSource(source, vertexSource, fragmentSource);
+        parseShaderSource(source, vertexSource, fragmentSource, geometrySource); // Pass geometrySource
 
         unsigned int vertexShader = compileShader(GL_VERTEX_SHADER, vertexSource.c_str());
         unsigned int fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragmentSource.c_str());
-        id = linkShaders(vertexShader, fragmentShader); // Combines and links the shaders into a single shader program
+       // unsigned int geometryShader = compileShader(GL_GEOMETRY_SHADER, geometrySource.c_str()); // Compile geometry shader
+        id = linkShaders(vertexShader, fragmentShader); // Link geometry shader
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
+        //glDeleteShader(geometryShader); // Delete geometry shader after linking
     }
     
-    void parseShaderSource(const std::string& shaderSource, std::string& vertexSource, std::string& fragmentSource) const {
+    void parseShaderSource(const std::string& shaderSource, std::string& vertexSource, std::string& fragmentSource, std::string& geometrySource) const {
         size_t vertexPos = shaderSource.find("// Vertex");
+        size_t geometryPos = shaderSource.find("// Geometry");
         size_t fragmentPos = shaderSource.find("// Fragment");
 
-        if (vertexPos != std::string::npos && fragmentPos != std::string::npos) {
-            vertexSource = shaderSource.substr(vertexPos, fragmentPos - vertexPos);
-            fragmentSource = shaderSource.substr(fragmentPos);
+        if (vertexPos != std::string::npos && geometryPos != std::string::npos && fragmentPos != std::string::npos) {
+            // Extract substrings for each shader type
+            vertexSource = shaderSource.substr(vertexPos, geometryPos - vertexPos);
+            geometrySource = shaderSource.substr(geometryPos, fragmentPos - geometryPos);
+            fragmentSource = shaderSource.substr(fragmentPos); // Extract fragment shader source
+
+              // Print out the source code for verification
+            // std::cout << "Vertex Shader Source:\n" << vertexSource << std::endl;
+            // std::cout << "Geometry Shader Source:\n" << geometrySource << std::endl;
+            // std::cout << "Fragment Shader Source:\n" << fragmentSource << std::endl;
         } else {
-            std::cerr << "Shader section not found in source, should be a '// Vertex' and '// Fragment'" << std::endl;
+            std::cerr << "Shader section not found in source, should be '// Vertex', '// Geometry', and '// Fragment'" << std::endl;
         }
     }
     
@@ -85,10 +93,11 @@ struct Shader {
         return shaderID;
     }
     
-    unsigned int linkShaders(unsigned int vertexShader, unsigned int fragmentShader) const {
+    unsigned int linkShaders(unsigned int vertexShader, unsigned int fragmentShader ) const {
         unsigned int programID = glCreateProgram();
         glAttachShader(programID, vertexShader);
         glAttachShader(programID, fragmentShader);
+        //glAttachShader(programID, geometryShader); // Attach geometry shader
         glLinkProgram(programID);
 
         int success;
@@ -101,5 +110,4 @@ struct Shader {
 
         return programID;
     }
-
 };

@@ -6,12 +6,24 @@ layout (location = 1) in vec2 aTexCoord;
 layout (location = 2) in vec3 aNormal; 
 out vec2 TexCoord;
 out vec3 Normal;
-
 void main() {
     gl_Position = vec4(aPos * 1, 1.0); // Scale down the position by half
     TexCoord = aTexCoord;
     Normal = aNormal;
     }
+
+// Geometry (Default: Pass-through)
+#version 330 core
+layout(triangles) in;
+layout(triangle_strip, max_vertices = 3) out;
+
+void main() {
+    for (int i = 0; i < gl_in.length(); ++i) {
+        gl_Position = gl_in[i].gl_Position;
+        EmitVertex();
+    }
+    EndPrimitive();
+}
 
 // Fragment
 #version 330 core
@@ -33,7 +45,6 @@ uniform float occlusionThreshold;
 uniform float occlusionStrength;
 uniform float exposure;
 uniform float gamma;
-
 void main() {
     
     float depth = pow(texture(depthTexture, TexCoord).r, 1000);

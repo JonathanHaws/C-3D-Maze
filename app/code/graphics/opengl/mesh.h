@@ -16,7 +16,7 @@ struct Mesh {
             }
         }
         loadBuffers();
-    }
+        }
     
     ~Mesh() { 
         glDeleteVertexArrays(1, &VAO);
@@ -32,8 +32,8 @@ struct Mesh {
             glDrawElements(GL_TRIANGLES, vertices.size(), GL_UNSIGNED_INT, 0);  
         } else {
             glDrawElementsInstanced(GL_TRIANGLES, vertices.size(), GL_UNSIGNED_INT, 0, numInstances);
+            }
         }
-    }
     
     auto get_flattened_vertices() {
     std::vector<float> flattenedVertices;
@@ -77,9 +77,9 @@ struct Mesh {
                 newTriangle.b = new_triangle.b + offset;
                 newTriangle.c = new_triangle.c + offset;
                 triangles.push_back(newTriangle);
+                }
+                    
             }
-                
-        }
 
     bool loadOBJ(const std::string& filePath) { // TODO: make more efficent by removing duplicate vertices
         std::ifstream file(filePath);
