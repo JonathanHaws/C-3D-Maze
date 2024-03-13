@@ -108,6 +108,7 @@ int main() {
 
         regularShader.bind();
         regularShader.setVec3("lightDirection", sunX, sunY, sunZ);
+        regularShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
         regularShader.setVec3("objectColor", objectColor.x, objectColor.y, objectColor.z);
         regularShader.setVec3("ambientColor", ambientColor.x, ambientColor.y, ambientColor.z);
         regularShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
@@ -119,13 +120,13 @@ int main() {
 
         stone.bind(0);
         mazeShader.bind();
-        mazeShader.setMat4("Model",  glm::mat4(1.0f));
-        mazeShader.setMat4("View", camera.viewMatrix());
-        mazeShader.setMat4("Projection", camera.projectionMatrix());
         mazeShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
         mazeShader.setVec3("lightDirection", sunX, sunY, sunZ);
         mazeShader.setVec3("objectColor", objectColor.x, objectColor.y, objectColor.z);
         mazeShader.setVec3("ambientColor", ambientColor.x, ambientColor.y, ambientColor.z);
+        mazeShader.setMat4("Model",  glm::mat4(1.0f));
+        mazeShader.setMat4("View", camera.viewMatrix());
+        mazeShader.setMat4("Projection", camera.projectionMatrix());
         maze.draw();
 
         // framebuffer.unbind();
