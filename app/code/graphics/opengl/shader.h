@@ -32,11 +32,13 @@ struct Shader {
 
         unsigned int vertexShader = compileShader(GL_VERTEX_SHADER, vertexSource.c_str());
         unsigned int fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragmentSource.c_str());
-       // unsigned int geometryShader = compileShader(GL_GEOMETRY_SHADER, geometrySource.c_str()); // Compile geometry shader
-        id = linkShaders(vertexShader, fragmentShader); // Link geometry shader
+        unsigned int geometryShader = compileShader(GL_GEOMETRY_SHADER, geometrySource.c_str()); // Compile geometry shader
+        clear_gl_errors();
+        id = linkShaders(vertexShader, fragmentShader, geometryShader); // Link geometry shader
+        check_gl_errors();
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
-        //glDeleteShader(geometryShader); // Delete geometry shader after linking
+        glDeleteShader(geometryShader); 
     }
     
     void parseShaderSource(const std::string& shaderSource, std::string& vertexSource, std::string& fragmentSource, std::string& geometrySource) const {
@@ -91,13 +93,14 @@ struct Shader {
         }
 
         return shaderID;
-    }
+        }
     
-    unsigned int linkShaders(unsigned int vertexShader, unsigned int fragmentShader ) const {
+    unsigned int linkShaders(unsigned int vertexShader, unsigned int fragmentShader, unsigned int geometryShader) const {
+
         unsigned int programID = glCreateProgram();
         glAttachShader(programID, vertexShader);
         glAttachShader(programID, fragmentShader);
-        //glAttachShader(programID, geometryShader); // Attach geometry shader
+        glAttachShader(programID, geometryShader); // Attach geometry shader
         glLinkProgram(programID);
 
         int success;
@@ -106,8 +109,9 @@ struct Shader {
             char infoLog[512];
             glGetProgramInfoLog(programID, 512, nullptr, infoLog);
             std::cerr << "Shader program linking failed:\n" << infoLog << std::endl;
-        }
+            }
 
         return programID;
-    }
+        
+        }
 };

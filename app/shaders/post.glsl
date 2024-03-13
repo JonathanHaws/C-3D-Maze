@@ -12,18 +12,17 @@ void main() {
     Normal = aNormal;
     }
 
-// Geometry (Default: Pass-through)
+// Geometry
 #version 330 core
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 3) out;
-
 void main() {
     for (int i = 0; i < gl_in.length(); ++i) {
         gl_Position = gl_in[i].gl_Position;
         EmitVertex();
-    }
+        }
     EndPrimitive();
-}
+    }
 
 // Fragment
 #version 330 core

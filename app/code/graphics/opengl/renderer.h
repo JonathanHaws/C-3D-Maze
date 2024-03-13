@@ -12,13 +12,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../loaders/stb_image.h"
 
-#include "shader.h"
-#include "texture.h"
-#include "mesh.h"
-
 void clear_gl_errors() {
     while (glGetError() != GL_NO_ERROR);
-};
+    };
 
 void check_gl_errors() {
     const GLubyte* version = glGetString(GL_VERSION);
@@ -32,6 +28,10 @@ void check_gl_errors() {
         std::cerr << "OpenGL Error: " << err << std::endl;
         };
     };
+
+#include "shader.h"
+#include "texture.h"
+#include "mesh.h"
 
 struct Framebuffer {
     

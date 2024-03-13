@@ -14,20 +14,19 @@ void main() {
     gl_Position = Projection * MV * vec4(aPos, 1.0);
     TexCoord = aTexCoord;
     Normal = mat3(transpose(inverse(Model))) * aNormal;
-}
+    }
 
-// Geometry (Default: Pass-through)
+// Geometry 
 #version 330 core
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 3) out;
-
 void main() {
     for (int i = 0; i < gl_in.length(); ++i) {
         gl_Position = gl_in[i].gl_Position;
         EmitVertex();
-    }
+        }
     EndPrimitive();
-}
+    }
 
 // Fragment
 #version 330 core
@@ -38,4 +37,4 @@ uniform vec3 objectColor;
 void main() {
     vec4 texColor = texture(texture_diffuse1, TexCoord);
     FragColor = texColor;
-}
+    }

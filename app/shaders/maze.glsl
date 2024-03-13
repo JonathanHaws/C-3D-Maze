@@ -34,18 +34,17 @@ void main() {
     Normal = mat3(transpose(inverse(Model))) * aNormal;
     }
 
-// Geometry (Default: Pass-through)
+// Geometry 
 #version 330 core
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 3) out;
-
 void main() {
     for (int i = 0; i < gl_in.length(); ++i) {
         gl_Position = gl_in[i].gl_Position;
         EmitVertex();
-    }
+        }
     EndPrimitive();
-}
+    }
 
 // Fragment
 #version 330 core
@@ -57,7 +56,6 @@ uniform vec3 objectColor;
 uniform vec3 ambientColor;   
 uniform vec3 lightColor;     
 uniform vec3 lightDirection;
-
 void main() {
     vec3 ambient = ambientColor * objectColor;
     vec3 norm = normalize(Normal); // Use the normal vector passed from the vertex shader

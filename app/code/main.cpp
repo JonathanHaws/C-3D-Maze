@@ -109,9 +109,9 @@ int main() {
         glClearColor(skyColor.r, skyColor.g, skyColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        framebuffer.bind();
-        glClearColor(skyColor.r, skyColor.g, skyColor.b, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //framebuffer.bind();
+        // glClearColor(skyColor.r, skyColor.g, skyColor.b, 1.0f);
+        // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         grass.bind(0);
         mazeShader.setMat4("Model",  glm::mat4(1.0f));
@@ -134,34 +134,34 @@ int main() {
         maze.draw();
         mazeShader.unbind();
 
-        framebuffer.unbind();
+        // framebuffer.unbind();
 
-        postShader.bind();
-        postShader.setFloat("exposure", exposure);
-        postShader.setFloat("gamma", gamma);
-        postShader.setInt("fog", fog);
-        postShader.setFloat("fog_distance", fog_distance);
-        postShader.setFloat("fog_falloff", fog_falloff);
-        postShader.setVec3("fog_color", fog_color.x, fog_color.y, fog_color.z);
-        postShader.setFloat("exposure", exposure);
-        postShader.setFloat("gamma", gamma);
-        postShader.setInt("blur", blur);
-        postShader.setInt("blurRadius", blurRadius);
-        postShader.setInt("depthBuffer", depthBuffer);
-        postShader.setInt("ambientOcclusion", ambientOcclusion);
-        postShader.setInt("occlusionBuffer", occlusionBuffer);
-        postShader.setInt("occlusionRadius", occlusionRadius);
-        postShader.setFloat("occlusionThreshold", occlusionThreshold);
-        postShader.setFloat("occlusionStrength", occlusionStrength);
+        // postShader.bind();
+        // postShader.setFloat("exposure", exposure);
+        // postShader.setFloat("gamma", gamma);
+        // postShader.setInt("fog", fog);
+        // postShader.setFloat("fog_distance", fog_distance);
+        // postShader.setFloat("fog_falloff", fog_falloff);
+        // postShader.setVec3("fog_color", fog_color.x, fog_color.y, fog_color.z);
+        // postShader.setFloat("exposure", exposure);
+        // postShader.setFloat("gamma", gamma);
+        // postShader.setInt("blur", blur);
+        // postShader.setInt("blurRadius", blurRadius);
+        // postShader.setInt("depthBuffer", depthBuffer);
+        // postShader.setInt("ambientOcclusion", ambientOcclusion);
+        // postShader.setInt("occlusionBuffer", occlusionBuffer);
+        // postShader.setInt("occlusionRadius", occlusionRadius);
+        // postShader.setFloat("occlusionThreshold", occlusionThreshold);
+        // postShader.setFloat("occlusionStrength", occlusionStrength);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, framebuffer.color_texture);
-        glUniform1i(glGetUniformLocation(postShader.id, "colorTexture"), 0);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, framebuffer.depth_texture);
-        glUniform1i(glGetUniformLocation(postShader.id, "depthTexture"), 1);
+        // glActiveTexture(GL_TEXTURE0);
+        // glBindTexture(GL_TEXTURE_2D, framebuffer.color_texture);
+        // glUniform1i(glGetUniformLocation(postShader.id, "colorTexture"), 0);
+        // glActiveTexture(GL_TEXTURE1);
+        // glBindTexture(GL_TEXTURE_2D, framebuffer.depth_texture);
+        // glUniform1i(glGetUniformLocation(postShader.id, "depthTexture"), 1);
 
-        quad.draw();
+        // quad.draw();
         editor.edit();
         window.swap_buffers();
 
