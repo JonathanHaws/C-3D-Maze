@@ -51,13 +51,22 @@ void tri(float ax, float ay, float az, float bx, float by, float bz, float cx, f
     vec3 v2 = vec3(cx - ax, cy - ay, cz - az);
     vec3 normal = normalize(cross(v1, v2));
     
-    vec2 uvA = vec2(ax, az);
-    vec2 uvB = vec2(bx, bz);
-    vec2 uvC = vec2(cx, cz);
-
-    emit(vec3(ax, ay, az), uvA, normal);
-    emit(vec3(bx, by, bz), uvB, normal);
-    emit(vec3(cx, cy, cz), uvC, normal);
+    if (ay == by && by == cy) {
+        // Vertical surface, use xz coordinates for UV
+        emit(vec3(ax, ay, az), vec2(ax, az), normal);
+        emit(vec3(bx, by, bz), vec2(bx, bz), normal);
+        emit(vec3(cx, cy, cz), vec2(cx, cz), normal);
+    } else if (ax == bx && bx == cx) {
+        // Horizontal surface, use yz coordinates for UV
+        emit(vec3(ax, ay, az), vec2(ay, az), normal);
+        emit(vec3(bx, by, bz), vec2(by, bz), normal);
+        emit(vec3(cx, cy, cz), vec2(cy, cz), normal);
+    } else {
+        // Diagonal surface, use xy coordinates for UV
+        emit(vec3(ax, ay, az), vec2(ax, ay), normal);
+        emit(vec3(bx, by, bz), vec2(bx, by), normal);
+        emit(vec3(cx, cy, cz), vec2(cx, cy), normal);
+    }
     EndPrimitive();
     }
 
