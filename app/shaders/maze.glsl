@@ -47,9 +47,9 @@ void tri(float ax, float ay, float az, float bx, float by, float bz, float cx, f
     bx *= scale; by *= scale; bz *= scale;
     cx *= scale; cy *= scale; cz *= scale;
 
-    vec3 v1 = vec3(bx - ax, by - ay, bz - az); // Calculate Normal
-    vec3 v2 = vec3(cx - ax, cy - ay, cz - az);
-    vec3 normal = normalize(cross(v1, v2));
+    vec3 v1 = vec3(cx - ax, cy - ay, cz - az); // Calculate Normal
+    vec3 v2 = vec3(bx - ax, by - ay, bz - az); // Note the swapped order
+    vec3 normal = normalize(cross(v1, v2));    // Note the swapped order
     
     if (ay == by && by == cy) {
         // Vertical surface, use xz coordinates for UV
@@ -84,8 +84,8 @@ void main() {
     tri (x + 1, 0, z, x + 1, 1, z, x + 1, 0, z + 1); // East 
     tri (x + 1, 0, z + 1, x + 1, 1, z, x + 1, 1, z + 1);   
 
-    tri (x + 1, 0, z + 1, x + 1, 1, z + 1, x, 0, z + 1); // North 
-    tri (x, 0, z + 1, x, 1, z + 1, x + 1, 1, z + 1);       
+    tri (x, 0, z + 1, x + 1, 1, z + 1, x + 1, 0, z + 1); // North 
+    tri (x, 0, z + 1, x, 1, z + 1, x + 1, 1, z + 1);    
 
     tri (x, 0, z + 1, x, 1, z + 1, x, 0, z); // West
     tri (x, 0, z, x, 1, z + 1, x, 1, z);   
