@@ -29,44 +29,35 @@ uniform mat4 Projection;
 out vec2 TexCoordNew;
 out vec3 NormalNew;
 
-void main() {
+void emit(vec3 vertex, vec2 texCoord, vec3 normal) {
+    gl_Position = Projection * View * Model * vec4(vertex, 1.0);
+    TexCoordNew = texCoord;
+    NormalNew = normal;
+    EmitVertex();
+    }
 
+void tri(float ax, float ay, float az, float au, float av, float bx, float by, float bz, float bu, float bv, float cx, float cy, float cz, float cu, float cv, float nx, float ny, float nz) {
     float scale = 8.0;
-    float xoffset = mazeWidth / 2;
-    float zoffset = mazeHeight / 2;
-
-    int posX = instance[0] % mazeWidth;
-    int posZ = instance[0] / mazeWidth;
-
-    // Vertices of the triangle
-    vec3 vertex1 = vec3(posX    , 0.0, posZ);
-    vec3 vertex2 = vec3(posX + 1, 0.0, posZ);
-    vec3 vertex3 = vec3(posX    , 1.0, posZ);
-    vertex1.x -= xoffset; vertex1.z -= zoffset;
-    vertex2.x -= xoffset; vertex2.z -= zoffset;
-    vertex3.x -= xoffset; vertex3.z -= zoffset;
-    vertex1 *= scale;
-    vertex2 *= scale;
-    vertex3 *= scale;
+    float xoffset = float(mazeWidth) / 2.0;
+    float zoffset = float(mazeHeight) / 2.0;
+    ax -= xoffset; az -= zoffset;
+    bx -= xoffset; bz -= zoffset;
+    cx -= xoffset; cz -= zoffset;
+    ax *= scale; ay *= scale; az *= scale;
+    bx *= scale; by *= scale; bz *= scale;
+    cx *= scale; cy *= scale; cz *= scale;
     
-    // Perform MVP transformation
-    gl_Position = Projection * View * Model * vec4(vertex1, 1.0);
-    TexCoordNew = vec2(0.0, 0.0); // Example texture coordinate
-    NormalNew = vec3(0.0, 0.0, 1.0); // Example normal
-    EmitVertex();
-
-    gl_Position = Projection * View * Model * vec4(vertex2, 1.0);
-    TexCoordNew = vec2(1.0, 0.0); // Example texture coordinate
-    NormalNew = vec3(0.0, 0.0, 1.0); // Example normal
-    EmitVertex();
-
-    gl_Position = Projection * View * Model * vec4(vertex3, 1.0);
-    TexCoordNew = vec2(0.0, 1.0); // Example texture coordinate
-    NormalNew = vec3(0.0, 0.0, 1.0); // Example normal
-    EmitVertex();
-
+    emit(vec3(ax, ay, az), vec2(au, av), vec3(nx, ny, nz));
+    emit(vec3(bx, by, bz), vec2(bu, bv), vec3(nx, ny, nz));
+    emit(vec3(cx, cy, cz), vec2(cu, cv), vec3(nx, ny, nz));
     EndPrimitive();
-}
+    }
+
+void main() {
+    int x = instance[0] % mazeWidth;
+    int z = instance[0] / mazeWidth;
+    tri (x, 0, z, 0, 0, x, 1, z, 0, 1, x + 1, 0, z, 1, 0, 0, 1, 1);
+    }
 
 // Fragment
 #version 330 core
