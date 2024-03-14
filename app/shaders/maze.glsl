@@ -13,7 +13,7 @@ void main() {
 // Geometry 
 #version 330 core
 layout(triangles) in;
-layout(triangle_strip, max_vertices = 24) out; // Keep as low as possible
+layout(triangle_strip, max_vertices = 30) out; // Keep as low as possible
 
 in vec2 TexCoord[];
 in vec3 Normal[];
@@ -65,18 +65,20 @@ void main() {
     vec4 texColor = texture(corridorsTexture, texCoord);
     if (texColor.r == 0) { return; }
 
-    tri (x    , 0, z, x, 1, z, x + 1, 0, z);
+    tri (x    , 0, z, x, 1, z, x + 1, 0, z); // South
     tri (x + 1, 0, z, x, 1, z, x + 1, 1, z);
 
-    tri (x + 1, 0, z, x + 1, 1, z, x + 1, 0, z + 1);   // Right wall (triangle 1)
-    tri (x + 1, 0, z + 1, x + 1, 1, z, x + 1, 1, z + 1);   // Right wall (triangle 2)
+    tri (x + 1, 0, z, x + 1, 1, z, x + 1, 0, z + 1); // East 
+    tri (x + 1, 0, z + 1, x + 1, 1, z, x + 1, 1, z + 1);   
 
-    tri (x + 1, 0, z + 1, x + 1, 1, z + 1, x, 0, z + 1);    // Top wall (triangle 1)
-    tri (x, 0, z + 1, x, 1, z + 1, x + 1, 1, z + 1);        // Top wall (triangle 2)
+    tri (x + 1, 0, z + 1, x + 1, 1, z + 1, x, 0, z + 1); // North 
+    tri (x, 0, z + 1, x, 1, z + 1, x + 1, 1, z + 1);       
 
-    tri (x, 0, z + 1, x, 1, z + 1, x, 0, z);     // Left wall (triangle 1)
+    tri (x, 0, z + 1, x, 1, z + 1, x, 0, z); // West
     tri (x, 0, z, x, 1, z + 1, x, 1, z);   
 
+    tri (x, 1, z, x + 1, 1, z, x + 1, 1, z + 1); // Top
+    tri (x, 1, z, x + 1, 1, z + 1, x, 1, z + 1);    
 
     }
 
