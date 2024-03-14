@@ -30,11 +30,15 @@ struct Shader {
         std::string source = loadShaderSource(filepath);
         parseShaderSource(source, vertexSource, fragmentSource, geometrySource); // Pass geometrySource
 
+        std::vector<unsigned int> sub_shaders;
         unsigned int vertexShader = compileShader(GL_VERTEX_SHADER, vertexSource.c_str());
         unsigned int fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragmentSource.c_str());
         unsigned int geometryShader = compileShader(GL_GEOMETRY_SHADER, geometrySource.c_str()); // Compile geometry shader
+        sub_shaders.push_back(vertexShader);
+        sub_shaders.push_back(fragmentShader);
+        sub_shaders.push_back(geometryShader); // Add geometry shader to sub_shaders
         //clear_gl_errors();
-        id = linkShaders(filepath, vertexShader, fragmentShader, geometryShader); // Link geometry shader
+        id = linkShaders(filepath, sub_shaders); // Link geometry shader
         //check_gl_errors();
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
@@ -95,12 +99,13 @@ struct Shader {
         return shaderID;
         }
     
-    unsigned int linkShaders(const std::string& path, unsigned int vertexShader, unsigned int fragmentShader, unsigned int geometryShader) const {
-
+    unsigned int linkShaders(const std::string& path, const std::vector<unsigned int>& shaderPrograms) const {
         unsigned int programID = glCreateProgram();
-        glAttachShader(programID, vertexShader);
-        glAttachShader(programID, geometryShader); // Attach geometry shader
-        glAttachShader(programID, fragmentShader);
+        
+        for (unsigned int shader : shaderPrograms) {
+            glAttachShader(programID, shader);
+            }
+        
         glLinkProgram(programID);
 
         int success;
@@ -109,9 +114,8 @@ struct Shader {
             char infoLog[512];
             glGetProgramInfoLog(programID, 512, nullptr, infoLog);
             std::cerr << "Shader program linking failed for " << path << ":\n" << infoLog << std::endl;
-            }
+        }
 
         return programID;
-        
-        }
+    }
 };
