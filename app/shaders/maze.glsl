@@ -47,13 +47,17 @@ void tri(float ax, float ay, float az, float bx, float by, float bz, float cx, f
     bx *= scale; by *= scale; bz *= scale;
     cx *= scale; cy *= scale; cz *= scale;
 
-    vec3 v1 = vec3(bx - ax, by - ay, bz - az);
+    vec3 v1 = vec3(bx - ax, by - ay, bz - az); // Calculate Normal
     vec3 v2 = vec3(cx - ax, cy - ay, cz - az);
     vec3 normal = normalize(cross(v1, v2));
     
-    emit(vec3(ax, ay, az), vec2(0, 0), normal);
-    emit(vec3(bx, by, bz), vec2(1, 0), normal);
-    emit(vec3(cx, cy, cz), vec2(0, 1), normal);
+    vec2 uvA = vec2(ax, az) / float(mazeWidth);
+    vec2 uvB = vec2(bx, bz) / float(mazeWidth);
+    vec2 uvC = vec2(cx, cz) / float(mazeWidth);
+
+    emit(vec3(ax, ay, az), uvA, normal);
+    emit(vec3(bx, by, bz), uvB, normal);
+    emit(vec3(cx, cy, cz), uvC, normal);
     EndPrimitive();
     }
 
