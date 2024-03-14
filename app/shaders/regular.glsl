@@ -19,7 +19,6 @@ void main() {
 #version 330 core
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 3) out;
-
 void main() {
     for (int i = 0; i < gl_in.length(); ++i) {
         gl_Position = gl_in[i].gl_Position;
@@ -43,7 +42,6 @@ void main() {
     vec3 norm = normalize(Normal); // Use the normal vector passed from the vertex shader
     vec3 lightDir = normalize(lightDirection);
     float diff = max(dot(norm, lightDir), 0.0);
-    diff = 1.0;
     vec3 diffuse = lightColor * (diff * objectColor);
     vec3 finalColor = (ambient + diffuse) * texture(texture_diffuse1, TexCoord).rgb;
      
