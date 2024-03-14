@@ -13,7 +13,7 @@ void main() {
 // Geometry 
 #version 330 core
 layout(triangles) in;
-layout(triangle_strip, max_vertices = 6) out;
+layout(triangle_strip, max_vertices = 24) out; // Keep as low as possible
 
 in vec2 TexCoord[];
 in vec3 Normal[];
@@ -36,7 +36,7 @@ void emit(vec3 vertex, vec2 texCoord, vec3 normal) {
     EmitVertex();
     }
 
-void tri(float ax, float ay, float az, float au, float av, float bx, float by, float bz, float bu, float bv, float cx, float cy, float cz, float cu, float cv, float nx, float ny, float nz) {
+void tri(float ax, float ay, float az, float bx, float by, float bz, float cx, float cy, float cz) {
     float scale = 2.0;
     float xoffset = float(mazeWidth) / 2.0;
     float zoffset = float(mazeHeight) / 2.0;
@@ -46,19 +46,38 @@ void tri(float ax, float ay, float az, float au, float av, float bx, float by, f
     ax *= scale; ay *= scale; az *= scale;
     bx *= scale; by *= scale; bz *= scale;
     cx *= scale; cy *= scale; cz *= scale;
+
+    vec3 v1 = vec3(bx - ax, by - ay, bz - az);
+    vec3 v2 = vec3(cx - ax, cy - ay, cz - az);
+    vec3 normal = normalize(cross(v1, v2));
     
-    emit(vec3(ax, ay, az), vec2(au, av), vec3(nx, ny, nz));
-    emit(vec3(bx, by, bz), vec2(bu, bv), vec3(nx, ny, nz));
-    emit(vec3(cx, cy, cz), vec2(cu, cv), vec3(nx, ny, nz));
+    emit(vec3(ax, ay, az), vec2(0, 0), normal);
+    emit(vec3(bx, by, bz), vec2(1, 0), normal);
+    emit(vec3(cx, cy, cz), vec2(0, 1), normal);
     EndPrimitive();
     }
 
 void main() {
     int x = instance[0] % mazeWidth;
     int z = instance[0] / mazeWidth;
-    //quad(x, 0, z, 0, 0, x, 1, z, 0, 1, x + 1, 0, z, 1, 0, x + 1, 1, z, 1, 1, 0, 0, 1);
-    tri (x, 0, z, 0, 0, x, 1, z, 0, 1, x + 1, 0, z, 1, 0, 0, 1, 1);
-    tri (x + 1, 0, z, 1, 0, x, 1, z, 0, 1, x + 1, 1, z, 1, 1, 0, 1, 1);
+
+    vec2 texCoord = vec2((float(x) + 0.5) / float(mazeWidth), (float(z) + 0.5) / float(mazeHeight));
+    vec4 texColor = texture(corridorsTexture, texCoord);
+    if (texColor.r == 0) { return; }
+
+    tri (x    , 0, z, x, 1, z, x + 1, 0, z);
+    tri (x + 1, 0, z, x, 1, z, x + 1, 1, z);
+
+    tri (x + 1, 0, z, x + 1, 1, z, x + 1, 0, z + 1);   // Right wall (triangle 1)
+    tri (x + 1, 0, z + 1, x + 1, 1, z, x + 1, 1, z + 1);   // Right wall (triangle 2)
+
+    tri (x + 1, 0, z + 1, x + 1, 1, z + 1, x, 0, z + 1);    // Top wall (triangle 1)
+    tri (x, 0, z + 1, x, 1, z + 1, x + 1, 1, z + 1);        // Top wall (triangle 2)
+
+    tri (x, 0, z + 1, x, 1, z + 1, x, 0, z);     // Left wall (triangle 1)
+    tri (x, 0, z, x, 1, z + 1, x, 1, z);   
+
+
     }
 
 // Fragment
