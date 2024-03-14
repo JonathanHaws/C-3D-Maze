@@ -28,7 +28,7 @@ struct Maze {
         texture(width, height),
         camera(camera),
         loop(loop), 
-        wall("meshes/cube.obj"),
+        wall("meshes/quad.obj"),
         shader2d("shaders/2d.glsl"),
         quad("meshes/quad.obj")
         {
