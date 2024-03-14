@@ -51,9 +51,9 @@ void tri(float ax, float ay, float az, float bx, float by, float bz, float cx, f
     vec3 v2 = vec3(cx - ax, cy - ay, cz - az);
     vec3 normal = normalize(cross(v1, v2));
     
-    vec2 uvA = vec2(ax, az) / float(mazeWidth);
-    vec2 uvB = vec2(bx, bz) / float(mazeWidth);
-    vec2 uvC = vec2(cx, cz) / float(mazeWidth);
+    vec2 uvA = vec2(ax, az);
+    vec2 uvB = vec2(bx, bz);
+    vec2 uvC = vec2(cx, cz);
 
     emit(vec3(ax, ay, az), uvA, normal);
     emit(vec3(bx, by, bz), uvB, normal);
