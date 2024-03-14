@@ -37,7 +37,7 @@ void emit(vec3 vertex, vec2 texCoord, vec3 normal) {
     }
 
 void tri(float ax, float ay, float az, float au, float av, float bx, float by, float bz, float bu, float bv, float cx, float cy, float cz, float cu, float cv, float nx, float ny, float nz) {
-    float scale = 8.0;
+    float scale = 2.0;
     float xoffset = float(mazeWidth) / 2.0;
     float zoffset = float(mazeHeight) / 2.0;
     ax -= xoffset; az -= zoffset;
@@ -56,14 +56,16 @@ void tri(float ax, float ay, float az, float au, float av, float bx, float by, f
 void main() {
     int x = instance[0] % mazeWidth;
     int z = instance[0] / mazeWidth;
+    //quad(x, 0, z, 0, 0, x, 1, z, 0, 1, x + 1, 0, z, 1, 0, x + 1, 1, z, 1, 1, 0, 0, 1);
     tri (x, 0, z, 0, 0, x, 1, z, 0, 1, x + 1, 0, z, 1, 0, 0, 1, 1);
+    tri (x + 1, 0, z, 1, 0, x, 1, z, 0, 1, x + 1, 1, z, 1, 1, 0, 1, 1);
     }
 
 // Fragment
 #version 330 core
 out vec4 FragColor;
 in vec2 TexCoordNew;
-in vec3 NormalNew;
+in vec3 NormalNew;  
 uniform sampler2D texture_diffuse1;
 uniform vec3 objectColor;    
 uniform vec3 ambientColor;   

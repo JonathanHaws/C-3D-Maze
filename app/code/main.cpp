@@ -33,7 +33,7 @@ int main() {
 
     Audio audio;
     Camera camera(80.0f, 1920.0f / 1080.0f, 0.1f, 10000.0f); 
-    camera.set_position(0, 200, -200);
+    camera.set_position(0, 30, -100);
     camera.set_target(0, 0, 0);
     Window window(1920, 1080, "Maze", true);
     Framebuffer framebuffer(1920, 1080);
