@@ -8,7 +8,7 @@ out int instance; // Export instance variable
 void main() {
     instance = gl_InstanceID;
     gl_Position = vec4(aPos, 1.0);
-}
+    }
 
 // Geometry 
 #version 330 core
@@ -31,14 +31,24 @@ out vec3 NormalNew;
 
 void main() {
 
+    float scale = 8.0;
+    float xoffset = mazeWidth / 2;
+    float zoffset = mazeHeight / 2;
+
     int posX = instance[0] % mazeWidth;
-    int posY = instance[0] / mazeWidth;
+    int posZ = instance[0] / mazeWidth;
 
     // Vertices of the triangle
-    vec3 vertex1 = vec3(posX, posY, 0.0);
-    vec3 vertex2 = vec3(posX + 1.0, posY, 0.0);
-    vec3 vertex3 = vec3(posX, posY + 1.0, 0.0);
-
+    vec3 vertex1 = vec3(posX    , 0.0, posZ);
+    vec3 vertex2 = vec3(posX + 1, 0.0, posZ);
+    vec3 vertex3 = vec3(posX    , 1.0, posZ);
+    vertex1.x -= xoffset; vertex1.z -= zoffset;
+    vertex2.x -= xoffset; vertex2.z -= zoffset;
+    vertex3.x -= xoffset; vertex3.z -= zoffset;
+    vertex1 *= scale;
+    vertex2 *= scale;
+    vertex3 *= scale;
+    
     // Perform MVP transformation
     gl_Position = Projection * View * Model * vec4(vertex1, 1.0);
     TexCoordNew = vec2(0.0, 0.0); // Example texture coordinate
