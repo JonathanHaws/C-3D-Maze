@@ -5,17 +5,29 @@ layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec2 aTexCoord;
 layout (location = 2) in vec3 aNormal; 
 out vec2 TexCoord;
-out vec3 Normal;
-
 void main() {
     gl_Position = vec4(aPos * 1, 1.0); // Scale down the position by half
     TexCoord = aTexCoord;
-    Normal = aNormal;
+    }
+
+// Geometry 
+#version 330 core
+layout(triangles) in;
+layout(triangle_strip, max_vertices = 3) out;
+in vec2 TexCoord[];
+out vec2 TexCoordNew;
+void main() {
+    for (int i = 0; i < gl_in.length(); ++i) {
+        gl_Position = gl_in[i].gl_Position;
+        TexCoordNew = TexCoord[i];  
+        EmitVertex();
+        }
+    EndPrimitive();
     }
 
 // Fragment
 #version 330 core
-in vec2 TexCoord;
+in vec2 TexCoordNew;
 out vec4 FragColor;
 uniform sampler2D colorTexture;
 uniform sampler2D depthTexture;
@@ -33,11 +45,10 @@ uniform float occlusionThreshold;
 uniform float occlusionStrength;
 uniform float exposure;
 uniform float gamma;
-
 void main() {
     
-    float depth = pow(texture(depthTexture, TexCoord).r, 1000);
-    vec3 finalColor = texture(colorTexture, TexCoord).rgb;  
+    float depth = pow(texture(depthTexture, TexCoordNew).r, 1000);
+    vec3 finalColor = texture(colorTexture, TexCoordNew).rgb;  
 
     finalColor *= exposure;
 
@@ -49,14 +60,14 @@ void main() {
     if (ambientOcclusion) { 
         int width = int(occlusionRadius) * 2 + 1;
         vec2 texelSize = 1.0 / textureSize(depthTexture, 0);
-        float centerDepth = pow(texture(depthTexture, TexCoord).r, 1000);
+        float centerDepth = pow(texture(depthTexture, TexCoordNew).r, 1000);
         
         float occlusion = 0.0;
 
         for (int i = 0; i < width * width; ++i) {
             int x = i % width - int(occlusionRadius);
             int y = i / width - int(occlusionRadius);
-            vec2 sampleCoord = TexCoord + vec2(x, y) * texelSize;
+            vec2 sampleCoord = TexCoordNew + vec2(x, y) * texelSize;
             sampleCoord = clamp(sampleCoord, vec2(0.0), vec2(1.0)); // Fix Borders
             float sampleDepth = pow(texture(depthTexture, sampleCoord).r, 1000); 
             
@@ -86,7 +97,7 @@ void main() {
         for (int i = 0; i < width * width; ++i) {
             int x = i % width - int(blurRadius);
             int y = i / width - int(blurRadius);
-            vec2 sampleCoord = TexCoord + vec2(x, y) * texelSize;
+            vec2 sampleCoord = TexCoordNew + vec2(x, y) * texelSize;
             sampleCoord = clamp(sampleCoord, 0.0, 1.0); // Clamp both x and y coordinates
             blurColor += texture(colorTexture, sampleCoord).rgb;
             }

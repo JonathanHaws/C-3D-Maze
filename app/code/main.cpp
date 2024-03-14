@@ -33,7 +33,7 @@ int main() {
 
     Audio audio;
     Camera camera(80.0f, 1920.0f / 1080.0f, 0.1f, 10000.0f); 
-    camera.set_position(0, 200, -200);
+    camera.set_position(0, 30, -100);
     camera.set_target(0, 0, 0);
     Window window(1920, 1080, "Maze", true);
     Framebuffer framebuffer(1920, 1080);
@@ -97,42 +97,37 @@ int main() {
                 
             #pragma endregion
 
-        regularShader.bind();
-        regularShader.setVec3("lightDirection", sunX, sunY, sunZ);
-        regularShader.setVec3("objectColor", objectColor.x, objectColor.y, objectColor.z);
-        regularShader.setVec3("ambientColor", ambientColor.x, ambientColor.y, ambientColor.z);
-        regularShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
-
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
-
         glClearColor(skyColor.r, skyColor.g, skyColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         framebuffer.bind();
         glClearColor(skyColor.r, skyColor.g, skyColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
-        grass.bind(0);
-        mazeShader.setMat4("Model",  glm::mat4(1.0f));
-        mazeShader.setMat4("View", camera.viewMatrix());
-        mazeShader.setMat4("Projection", camera.projectionMatrix());
-        
+
+        regularShader.bind();
+        regularShader.setVec3("lightDirection", sunX, sunY, sunZ);
+        regularShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
+        regularShader.setVec3("objectColor", objectColor.x, objectColor.y, objectColor.z);
+        regularShader.setVec3("ambientColor", ambientColor.x, ambientColor.y, ambientColor.z);
+        regularShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
+        regularShader.setMat4("Model",  glm::mat4(1.0f));
+        regularShader.setMat4("View", camera.viewMatrix());
+        regularShader.setMat4("Projection", camera.projectionMatrix());   
+        grass.bind(0); 
         feild.draw();
 
         stone.bind(0);
         mazeShader.bind();
-        mazeShader.setMat4("Model",  glm::mat4(1.0f));
-        mazeShader.setMat4("View", camera.viewMatrix());
-        mazeShader.setMat4("Projection", camera.projectionMatrix());
-
         mazeShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
         mazeShader.setVec3("lightDirection", sunX, sunY, sunZ);
         mazeShader.setVec3("objectColor", objectColor.x, objectColor.y, objectColor.z);
         mazeShader.setVec3("ambientColor", ambientColor.x, ambientColor.y, ambientColor.z);
-
+        mazeShader.setMat4("Model",  glm::mat4(1.0f));
+        mazeShader.setMat4("View", camera.viewMatrix());
+        mazeShader.setMat4("Projection", camera.projectionMatrix());
         maze.draw();
-        mazeShader.unbind();
 
         framebuffer.unbind();
 
@@ -143,8 +138,6 @@ int main() {
         postShader.setFloat("fog_distance", fog_distance);
         postShader.setFloat("fog_falloff", fog_falloff);
         postShader.setVec3("fog_color", fog_color.x, fog_color.y, fog_color.z);
-        postShader.setFloat("exposure", exposure);
-        postShader.setFloat("gamma", gamma);
         postShader.setInt("blur", blur);
         postShader.setInt("blurRadius", blurRadius);
         postShader.setInt("depthBuffer", depthBuffer);
@@ -167,7 +160,6 @@ int main() {
 
         }
         
-    
     return 0;
  
     }
