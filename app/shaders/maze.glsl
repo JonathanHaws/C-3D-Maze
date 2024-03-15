@@ -70,28 +70,38 @@ void tri(float ax, float ay, float az, float bx, float by, float bz, float cx, f
     EndPrimitive();
     }
 
+vec4 wall(float tx, float ty) {
+    float cellSize = 1.0 / float(mazeWidth);
+    return texture(corridorsTexture, vec2((tx + 0.5) * cellSize, (ty + 0.5)  * cellSize));
+    }
+
 void main() {
-    int x = instance[0] % mazeWidth;
-    int z = instance[0] / mazeWidth;
+    float x = instance[0] % mazeWidth;
+    float z = instance[0] / mazeWidth;
 
-    vec2 texCoord = vec2((float(x) + 0.5) / float(mazeWidth), (float(z) + 0.5) / float(mazeHeight));
-    vec4 texColor = texture(corridorsTexture, texCoord);
-    if (texColor.r == 0) { return; }
+    if (wall(x, z).r == 0 ) { return; }
+    
+    if (wall(x, z - 1).r == 0 ) {
+        tri (x    , 0, z, x, 1, z, x + 1, 0, z); 
+        tri (x + 1, 0, z, x, 1, z, x + 1, 1, z);
+        }
+    if (wall(x + 1, z).r == 0 ) {
+        tri (x + 1, 0, z, x + 1, 1, z, x + 1, 0, z + 1); // East 
+        tri (x + 1, 0, z + 1, x + 1, 1, z, x + 1, 1, z + 1);   
+    }
 
-    tri (x    , 0, z, x, 1, z, x + 1, 0, z); // South
-    tri (x + 1, 0, z, x, 1, z, x + 1, 1, z);
+    if (wall(x, z + 1).r == 0 ) {
+        tri (x, 0, z + 1, x + 1, 1, z + 1, x + 1, 0, z + 1); // North 
+        tri (x, 0, z + 1, x, 1, z + 1, x + 1, 1, z + 1);    
+    }
 
-    tri (x + 1, 0, z, x + 1, 1, z, x + 1, 0, z + 1); // East 
-    tri (x + 1, 0, z + 1, x + 1, 1, z, x + 1, 1, z + 1);   
+    if (wall(x - 1, z).r == 0 ) {
+        tri (x, 0, z + 1, x, 1, z + 1, x, 0, z); // West
+        tri (x, 0, z, x, 1, z + 1, x, 1, z);
+    } 
 
-    tri (x, 0, z + 1, x + 1, 1, z + 1, x + 1, 0, z + 1); // North 
-    tri (x, 0, z + 1, x, 1, z + 1, x + 1, 1, z + 1);    
-
-    tri (x, 0, z + 1, x, 1, z + 1, x, 0, z); // West
-    tri (x, 0, z, x, 1, z + 1, x, 1, z);   
-
-    tri (x, 1, z, x + 1, 1, z, x + 1, 1, z + 1); // Top
-    tri (x, 1, z, x + 1, 1, z + 1, x, 1, z + 1);    
+    //tri (x, 1, z, x + 1, 1, z, x + 1, 1, z + 1); // Top
+    //tri (x, 1, z, x + 1, 1, z + 1, x, 1, z + 1);    
 
     }
 
