@@ -7,7 +7,9 @@
 struct Maze {
     
     int width = 0; 
-    int height = 0; 
+    int depth = 0; 
+    float height = 0.0f;
+    float thickness = 1.0f;
     float timer = 0.0f; 
     float speed = 0.0f;
     bool loop = false; // If true, the maze will reset when it is complete
@@ -21,27 +23,29 @@ struct Maze {
     Shader shader2d;
     Mesh quad;
 
-    Maze(int width, int height, float speed, Camera& camera, bool loop = false):
+    Maze(int width, int depth, float height, float thickness, float speed, Camera& camera, bool loop = false):
         width(width),
+        depth(depth),
         height(height),
+        thickness(thickness),
         speed(speed),
-        texture(width, height),
+        texture(width, depth),
         camera(camera),
         loop(loop), 
         wall("meshes/quad.obj"),
         shader2d("shaders/2d.glsl"),
         quad("meshes/quad.obj")
         {
-        corridors.resize(width, std::vector<char>(height, '#'));
+        corridors.resize(width, std::vector<char>(depth, '#'));
         updateTextureFromCorridors();
         }
  
-    void updateTextureFromCorridors(int xoffset = 0, int yoffset = 0, int width = -1, int height = -1) {
+    void updateTextureFromCorridors(int xoffset = 0, int yoffset = 0, int width = -1, int depth = -1) {
         std::vector<unsigned char> textureData;
 
         // Determine the range of cells to update based on the provided parameters
         int endX = (width == -1) ? this->width : ((xoffset + width < this->width) ? (xoffset + width) : this->width);
-        int endY = (height == -1) ? this->height : ((yoffset + height < this->height) ? (yoffset + height) : this->height);
+        int endY = (depth == -1) ? this->depth : ((yoffset + depth < this->depth) ? (yoffset + depth) : this->depth);
 
         for (int y = yoffset; y < endY; ++y) {
             for (int x = xoffset; x < endX; ++x) {
@@ -61,12 +65,12 @@ struct Maze {
         const char* imageDataPtr = reinterpret_cast<const char*>(textureData.data());
 
         // Call the updateTexture function
-        texture.updateTexture(imageDataPtr, xoffset, yoffset, width, height);
+        texture.updateTexture(imageDataPtr, xoffset, yoffset, width, depth);
         }
 
     void reset() {
         corridors.clear();
-        corridors.resize(width, std::vector<char>(height, '#'));
+        corridors.resize(width, std::vector<char>(depth, '#'));
         cells_to_expand = std::stack<std::pair<int, int>>();
         updateTextureFromCorridors();
         }
@@ -78,12 +82,12 @@ struct Maze {
         }
     void expand() {
 
-        if (corridors.size() != width || corridors[0].size() != height) { // Avoid acessing out of bounds for stack and corridors
-            texture.resize(width, height);
+        if (corridors.size() != width || corridors[0].size() != depth) { // Avoid acessing out of bounds for stack and corridors
+            texture.resize(width, depth);
             reset();
             }
 
-        if (width < 3 || height < 3) { return; } // Maze is too small to expand (bandaid fix needs to be fixed)
+        if (width < 3 || depth < 3) { return; } // Maze is too small to expand (bandaid fix needs to be fixed)
         
         if (cells_to_expand.empty()) { 
             
@@ -104,7 +108,7 @@ struct Maze {
         for (const auto& dir : directions) {
             int nx = cell.first + dir.dx * 2;
             int ny = cell.second + dir.dy * 2;
-            if (nx >= 0 && ny >= 0 && nx < width && ny < height ) {
+            if (nx >= 0 && ny >= 0 && nx < width && ny < depth ) {
                 if (corridors[nx][ny] == '#') {
                     corridors[cell.first + dir.dx][cell.second + dir.dy] = ' ';
                     updateTextureFromCorridors(cell.first + dir.dx, cell.second + dir.dy, 1, 1);
@@ -152,10 +156,12 @@ struct Maze {
         texture.bind(1);
 
         glUniform1i(glGetUniformLocation(currentProgram, "mazeWidth"), width);
-        glUniform1i(glGetUniformLocation(currentProgram, "mazeHeight"), height);
+        glUniform1i(glGetUniformLocation(currentProgram, "mazeDepth"), depth);
+        glUniform1f(glGetUniformLocation(currentProgram, "mazeHeight"), height);
+        glUniform1f(glGetUniformLocation(currentProgram, "mazeThickness"), thickness);
         glUniform1i(glGetUniformLocation(currentProgram, "corridorsTexture"), 1);
 
-        wall.draw(width * height);
+        wall.draw(width * depth);
 
         }
         

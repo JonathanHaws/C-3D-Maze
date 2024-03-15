@@ -124,8 +124,9 @@ struct Editor {
             }
 
         if (ImGui::CollapsingHeader("Maze")) {
+            ImGui::SliderFloat("Height", &maze.height, 0.0, 10.0);
             ImGui::SliderInt("Width", &maze.width, 1, 2048);
-            ImGui::SliderInt("Height", &maze.height, 1, 2048);
+            ImGui::SliderInt("Depth", &maze.depth, 1, 2048);
             ImGui::SliderFloat("Speed", &maze.speed, 0.0f, 5000.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
             if (ImGui::Button("Reset")) {
                 maze.reset();

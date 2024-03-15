@@ -20,7 +20,8 @@ in vec3 Normal[];
 in int instance[];
 
 uniform int mazeWidth;
-uniform int mazeHeight;
+uniform int mazeDepth;
+uniform float mazeHeight;
 uniform sampler2D corridorsTexture;
 uniform mat4 Model;
 uniform mat4 View;        
@@ -39,7 +40,7 @@ void emit(vec3 vertex, vec2 texCoord, vec3 normal) {
 void tri(float ax, float ay, float az, float bx, float by, float bz, float cx, float cy, float cz) {
     float scale = 2.0;
     float xoffset = float(mazeWidth) / 2.0;
-    float zoffset = float(mazeHeight) / 2.0;
+    float zoffset = float(mazeDepth) / 2.0;
     ax -= xoffset; az -= zoffset;
     bx -= xoffset; bz -= zoffset;
     cx -= xoffset; cz -= zoffset;
@@ -72,7 +73,7 @@ void tri(float ax, float ay, float az, float bx, float by, float bz, float cx, f
 
 vec4 wall(float tx, float ty) {
     float cellSize = 1.0 / float(mazeWidth);
-    if (tx < 0.0 || tx >= float(mazeWidth) || ty < 0.0 || ty >= float(mazeHeight)) { return vec4(0.0); } // Return vec4 representing an empty cell if out of bounds
+    if (tx < 0.0 || tx >= float(mazeWidth) || ty < 0.0 || ty >= float(mazeDepth)) { return vec4(0.0); } // Return vec4 representing an empty cell if out of bounds
     return texture(corridorsTexture, vec2((tx + 0.5) * cellSize, (ty + 0.5) * cellSize));
     }
 
@@ -83,27 +84,27 @@ void main() {
     if (wall(x, z).r == 0 ) { return; }
     
     if (wall(x, z - 1).r == 0 ) {
-        tri (x    , 0, z, x, 1, z, x + 1, 0, z); 
-        tri (x + 1, 0, z, x, 1, z, x + 1, 1, z);
+        tri (x    , 0, z, x, mazeHeight, z, x + 1, 0, z); 
+        tri (x + 1, 0, z, x, mazeHeight, z, x + 1, mazeHeight, z);
         }
 
     if (wall(x + 1, z).r == 0 ) {
-        tri (x + 1, 0, z, x + 1, 1, z, x + 1, 0, z + 1); // East 
-        tri (x + 1, 0, z + 1, x + 1, 1, z, x + 1, 1, z + 1);   
+        tri (x + 1, 0, z, x + 1, mazeHeight, z, x + 1, 0, z + 1); // East 
+        tri (x + 1, 0, z + 1, x + 1, mazeHeight, z, x + 1, mazeHeight, z + 1);   
         }
 
     if (wall(x, z + 1).r == 0 ) {
-        tri (x, 0, z + 1, x + 1, 1, z + 1, x + 1, 0, z + 1); // North 
-        tri (x, 0, z + 1, x, 1, z + 1, x + 1, 1, z + 1);    
+        tri (x, 0, z + 1, x + 1, mazeHeight, z + 1, x + 1, 0, z + 1); // North 
+        tri (x, 0, z + 1, x, mazeHeight, z + 1, x + 1, mazeHeight, z + 1);    
         }
 
     if (wall(x - 1, z).r == 0 ) {
-        tri (x, 0, z + 1, x, 1, z + 1, x, 0, z); // West
-        tri (x, 0, z, x, 1, z + 1, x, 1, z);
+        tri (x, 0, z + 1, x, mazeHeight, z + 1, x, 0, z); // West
+        tri (x, 0, z, x, mazeHeight, z + 1, x, mazeHeight, z);
         } 
 
-    tri (x, 1, z, x + 1, 1, z, x + 1, 1, z + 1); // Top
-    tri (x, 1, z, x + 1, 1, z + 1, x, 1, z + 1);    
+    tri (x, mazeHeight, z, x + 1, mazeHeight, z, x + 1, mazeHeight, z + 1); // Top
+    tri (x, mazeHeight, z, x + 1, mazeHeight, z + 1, x, mazeHeight, z + 1);    
 
     }
 
