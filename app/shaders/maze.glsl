@@ -71,40 +71,34 @@ void tri(float ax, float ay, float az, float bx, float by, float bz, float cx, f
     EndPrimitive();
     }
 
-vec4 wall(float tx, float ty) {
+bool path(float tx, float ty) {
     float cellSize = 1.0 / float(mazeWidth);
-    if (tx < 0.0 || tx >= float(mazeWidth) || ty < 0.0 || ty >= float(mazeDepth)) { return vec4(0.0); } // Return vec4 representing an empty cell if out of bounds
-    return texture(corridorsTexture, vec2((tx + 0.5) * cellSize, (ty + 0.5) * cellSize));
+    if (tx < 0.0 || tx >= float(mazeWidth) || ty < 0.0 || ty >= float(mazeDepth)) { return true; } 
+    return texture(corridorsTexture, vec2((tx + 0.5) * cellSize, (ty + 0.5) * cellSize)).r == 0;
+    }
+
+void wall(float x1, float z1, float x2, float z2) {
+    tri(x1, 0.0, z1, x1, mazeHeight, z1, x2, 0.0, z2);
+    tri(x2, 0.0, z2, x1, mazeHeight, z1, x2, mazeHeight, z2);
+    }
+
+void roof(float x1, float z1, float x2, float z2) {
+    tri(x1, mazeHeight, z1, x2, mazeHeight, z1, x2, mazeHeight, z2);
+    tri(x1, mazeHeight, z1, x2, mazeHeight, z2, x1, mazeHeight, z2);
     }
 
 void main() {
     float x = instance[0] % mazeWidth;
     float z = instance[0] / mazeWidth;
 
-    if (wall(x, z).r == 0 ) { return; }
-    
-    if (wall(x, z - 1).r == 0 ) {
-        tri (x    , 0, z, x, mazeHeight, z, x + 1, 0, z); 
-        tri (x + 1, 0, z, x, mazeHeight, z, x + 1, mazeHeight, z);
-        }
+    if (path(x, z)) { return; }
 
-    if (wall(x + 1, z).r == 0 ) {
-        tri (x + 1, 0, z, x + 1, mazeHeight, z, x + 1, 0, z + 1); // East 
-        tri (x + 1, 0, z + 1, x + 1, mazeHeight, z, x + 1, mazeHeight, z + 1);   
-        }
+    if (path(x, z+1)) { wall(x, z+1, x+1, z+1); }
+    if (path(x, z-1)) { wall(x, z, x+1, z); }
+    if (path(x+1, z)) { wall(x+1, z, x+1, z+1); }
+    if (path(x-1, z)) { wall(x, z, x, z+1); }
 
-    if (wall(x, z + 1).r == 0 ) {
-        tri (x, 0, z + 1, x + 1, mazeHeight, z + 1, x + 1, 0, z + 1); // North 
-        tri (x, 0, z + 1, x, mazeHeight, z + 1, x + 1, mazeHeight, z + 1);    
-        }
-
-    if (wall(x - 1, z).r == 0 ) {
-        tri (x, 0, z + 1, x, mazeHeight, z + 1, x, 0, z); // West
-        tri (x, 0, z, x, mazeHeight, z + 1, x, mazeHeight, z);
-        } 
-
-    tri (x, mazeHeight, z, x + 1, mazeHeight, z, x + 1, mazeHeight, z + 1); // Top
-    tri (x, mazeHeight, z, x + 1, mazeHeight, z + 1, x, mazeHeight, z + 1);    
+    roof(x,z, x+1, z+1);
 
     }
 
