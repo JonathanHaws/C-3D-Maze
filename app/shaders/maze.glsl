@@ -23,7 +23,7 @@ uniform int mazeWidth;
 uniform int mazeDepth;
 uniform float mazeHeight;
 uniform float mazeBreadth;
-uniform sampler2D corridorsTexture;
+uniform sampler2D mazeTexture;
 uniform mat4 Model;
 uniform mat4 View;        
 uniform mat4 Projection; 
@@ -75,7 +75,7 @@ void tri(float ax, float ay, float az, float bx, float by, float bz, float cx, f
 bool path(float tx, float ty) {
     float cellSize = 1.0 / float(mazeWidth);
     if (tx < 0.0 || tx >= float(mazeWidth) || ty < 0.0 || ty >= float(mazeDepth)) { return true; } 
-    return texture(corridorsTexture, vec2((tx + 0.5) * cellSize, (ty + 0.5) * cellSize)).r == 0;
+    return texture(mazeTexture, vec2((tx + 0.5) * cellSize, (ty + 0.5) * cellSize)).r == 0;
     }
 
 void wall(float x1, float z1, float x2, float z2) {
@@ -120,6 +120,7 @@ void main() {
     if (path(x,z-1) && path(x-1,z)) { // Anti Corner
         wall(x+ (1 - mazeBreadth), z+ (1 - mazeBreadth), x + (1 - mazeBreadth), z+1);
         wall(x+ (1 - mazeBreadth), z+ (1 - mazeBreadth), x + 1, z +(1 - mazeBreadth));
+        wall(x+ 1, z+(1 - mazeBreadth), x+1, z+1);
         roof(x+ (1 - mazeBreadth), z+ (1 - mazeBreadth), x+1, z+1);
         return;
         }
@@ -144,7 +145,8 @@ void main() {
 out vec4 FragColor;
 in vec2 TexCoordNew;
 in vec3 NormalNew;  
-uniform sampler2D texture_diffuse1;
+uniform sampler2D bricksDiffuseTexture;
+uniform sampler2D bricksNormalTexture;
 uniform vec3 objectColor;    
 uniform vec3 ambientColor;   
 uniform vec3 lightColor;     
@@ -155,7 +157,7 @@ void main() {
     vec3 lightDir = normalize(lightDirection);
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = lightColor * (diff * objectColor);
-    vec3 finalColor = (ambient + diffuse) * texture(texture_diffuse1, TexCoordNew).rgb;
+    vec3 finalColor = (ambient + diffuse) * texture(bricksDiffuseTexture, TexCoordNew).rgb;
  
     FragColor = vec4(finalColor, 1.0);
     }

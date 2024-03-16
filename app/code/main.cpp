@@ -40,8 +40,7 @@ int main() {
     Shader regularShader("shaders/regular.glsl");
     Shader postShader("shaders/post.glsl");
     Shader mazeShader("shaders/maze.glsl");
-    Texture grass("textures/grass.jpg");
-    Texture stone("textures/stone.bmp");     
+    Texture grass("textures/grass.jpg");  
     Mesh wall("meshes/cube.obj");
     Mesh feild("meshes/feild.obj");
     Mesh quad("meshes/quad.obj");
@@ -118,7 +117,6 @@ int main() {
         grass.bind(0); 
         feild.draw();
 
-        stone.bind(0);
         mazeShader.bind();
         mazeShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
         mazeShader.setVec3("lightDirection", sunX, sunY, sunZ);

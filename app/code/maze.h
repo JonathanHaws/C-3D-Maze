@@ -18,7 +18,9 @@ struct Maze {
     std::stack<std::pair<int, int>> cells_to_expand; 
     std::vector<std::vector<char>> corridors;
     Mesh wall; 
-    Texture texture;
+    Texture mazeTexture;
+    Texture bricksDiffuseTexture;
+    Texture bricksNormalTexture;
     GLuint instanceBuffer = 0; 
     Shader shader2d;
     Mesh quad;
@@ -29,7 +31,9 @@ struct Maze {
         height(height),
         breadth(breadth),
         speed(speed),
-        texture(width, depth),
+        mazeTexture(width, depth),
+        bricksDiffuseTexture("textures/bricks/diffuse.jpg"),
+        bricksNormalTexture{"textures/bricks/normal.jpg"},
         camera(camera),
         loop(loop), 
         wall("meshes/quad.obj"),
@@ -65,7 +69,7 @@ struct Maze {
         const char* imageDataPtr = reinterpret_cast<const char*>(textureData.data());
 
         // Call the updateTexture function
-        texture.updateTexture(imageDataPtr, xoffset, yoffset, width, depth);
+        mazeTexture.updateTexture(imageDataPtr, xoffset, yoffset, width, depth);
         }
 
     void reset() {
@@ -83,7 +87,7 @@ struct Maze {
     void expand() {
 
         if (corridors.size() != width || corridors[0].size() != depth) { // Avoid acessing out of bounds for stack and corridors
-            texture.resize(width, depth);
+            mazeTexture.resize(width, depth);
             reset();
             }
 
@@ -138,7 +142,7 @@ struct Maze {
 
     void drawTexture() {
         shader2d.bind();
-        texture.bind(0);
+        mazeTexture.bind(0);
         glm::mat4 stopclipmodel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -0.5f));
         shader2d.setMat4("Model", stopclipmodel);
         shader2d.setMat4("View", glm::mat4(1.0f));
@@ -153,13 +157,18 @@ struct Maze {
 
         GLint currentProgram;
         glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
-        texture.bind(1);
 
         glUniform1i(glGetUniformLocation(currentProgram, "mazeWidth"), width);
         glUniform1i(glGetUniformLocation(currentProgram, "mazeDepth"), depth);
         glUniform1f(glGetUniformLocation(currentProgram, "mazeHeight"), height);
         glUniform1f(glGetUniformLocation(currentProgram, "mazeBreadth"), breadth);
-        glUniform1i(glGetUniformLocation(currentProgram, "corridorsTexture"), 1);
+
+        mazeTexture.bind(0);
+        bricksDiffuseTexture.bind(1);
+        bricksNormalTexture.bind(2); 
+        glUniform1i(glGetUniformLocation(currentProgram, "mazeTexture"), 0);
+        glUniform1i(glGetUniformLocation(currentProgram, "bricksDiffuseTexture"), 1);
+        glUniform1i(glGetUniformLocation(currentProgram, "bricksNormalTexture"), 2);
 
         wall.draw(width * depth);
 
