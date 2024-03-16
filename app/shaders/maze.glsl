@@ -13,7 +13,7 @@ void main() {
 // Geometry 
 #version 330 core
 layout(triangles) in;
-layout(triangle_strip, max_vertices = 30) out; // Keep as low as possible
+layout(triangle_strip, max_vertices = 50) out; // Keep as low as possible
 
 in vec2 TexCoord[];
 in vec3 Normal[];
@@ -22,6 +22,7 @@ in int instance[];
 uniform int mazeWidth;
 uniform int mazeDepth;
 uniform float mazeHeight;
+uniform float mazeBreadth;
 uniform sampler2D corridorsTexture;
 uniform mat4 Model;
 uniform mat4 View;        
@@ -93,12 +94,48 @@ void main() {
 
     if (path(x, z)) { return; }
 
-    if (path(x, z+1)) { wall(x, z+1, x+1, z+1); }
-    if (path(x, z-1)) { wall(x, z, x+1, z); }
-    if (path(x+1, z)) { wall(x+1, z, x+1, z+1); }
-    if (path(x-1, z)) { wall(x, z, x, z+1); }
+    if (!path(x,z-1) && !path(x-1,z) && !path(x-1,z-1)){ //roof
+        roof(x,z,x+1,z+1);
+        //return;
+        }
 
-    roof(x,z, x+1, z+1);
+    if (!path(x,z-1) && path(x-1,z)) { // Vertical Wall
+        wall(x + (1 - mazeBreadth), z, x + (1 - mazeBreadth), z + 1);
+        wall(x + (1 - mazeBreadth), z, x+1, z);
+        wall(x + (1 - mazeBreadth) , z+1, x+1, z +1);
+        wall(x + 1, z, x+1, z +1);
+        roof(x + (1 - mazeBreadth), z, x+1, z+1);
+        return;   
+        }
+
+    if (path(x,z-1) && !path(x-1,z)) { // Horizontal Wall
+        wall(x, z+ (1 - mazeBreadth), x+1, z+ (1 - mazeBreadth));
+        wall(x, z+ (1 - mazeBreadth), x, z+1);
+        roof(x, z+(1 - mazeBreadth), x+1, z+1);
+        wall(x+1, z+ (1 - mazeBreadth), x+1, z+1);
+        wall(x, z+1, x+1, z+1);
+        return;
+        }
+
+    if (path(x,z-1) && path(x-1,z)) { // Anti Corner
+        wall(x+ (1 - mazeBreadth), z+ (1 - mazeBreadth), x + (1 - mazeBreadth), z+1);
+        wall(x+ (1 - mazeBreadth), z+ (1 - mazeBreadth), x + 1, z +(1 - mazeBreadth));
+        roof(x+ (1 - mazeBreadth), z+ (1 - mazeBreadth), x+1, z+1);
+        return;
+        }
+
+    if (!path(x,z-1) && !path(x-1,z)) { // Corner
+
+        roof(x+1, z+1, x, z+ (1 - mazeBreadth));
+        roof(x+(1 - mazeBreadth), z, x + 1, z + (1 - mazeBreadth));
+
+        wall(x, z + (1 - mazeBreadth), x+ (1 - mazeBreadth), z + (1 - mazeBreadth));
+        wall(x + (1 - mazeBreadth), z, x + (1 - mazeBreadth), z+(1 - mazeBreadth));
+
+        wall(x, z+1, x+1, z+1);
+        wall(x+1, z, x+1, z+1);
+        return;
+        }
 
     }
 

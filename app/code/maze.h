@@ -9,7 +9,7 @@ struct Maze {
     int width = 0; 
     int depth = 0; 
     float height = 0.0f;
-    float thickness = 1.0f;
+    float breadth = 1.0f;
     float timer = 0.0f; 
     float speed = 0.0f;
     bool loop = false; // If true, the maze will reset when it is complete
@@ -23,11 +23,11 @@ struct Maze {
     Shader shader2d;
     Mesh quad;
 
-    Maze(int width, int depth, float height, float thickness, float speed, Camera& camera, bool loop = false):
+    Maze(int width, int depth, float height, float breadth, float speed, Camera& camera, bool loop = false):
         width(width),
         depth(depth),
         height(height),
-        thickness(thickness),
+        breadth(breadth),
         speed(speed),
         texture(width, depth),
         camera(camera),
@@ -158,7 +158,7 @@ struct Maze {
         glUniform1i(glGetUniformLocation(currentProgram, "mazeWidth"), width);
         glUniform1i(glGetUniformLocation(currentProgram, "mazeDepth"), depth);
         glUniform1f(glGetUniformLocation(currentProgram, "mazeHeight"), height);
-        glUniform1f(glGetUniformLocation(currentProgram, "mazeThickness"), thickness);
+        glUniform1f(glGetUniformLocation(currentProgram, "mazeBreadth"), breadth);
         glUniform1i(glGetUniformLocation(currentProgram, "corridorsTexture"), 1);
 
         wall.draw(width * depth);
