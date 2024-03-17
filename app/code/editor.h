@@ -8,36 +8,12 @@ struct Editor {
     Window& window;
     Camera& camera; 
     Sky& sky;
+    Finalizer& finalizer;
     Maze& maze;
     bool drawMazeTexture = false;
-    bool& depthBuffer;
-    float& exposure;
-    float& gamma;
-    bool& fog;
-    float& fog_distance;
-    float& fog_falloff;
-    glm::vec3&  fog_color;
-    bool& blur;
-    int& blurRadius;
-    bool& ambientOcclusion;
-    bool& occlusionBuffer;
-    int& occlusionRadius;
-    float& occlusionThreshold;
-    float& occlusionStrength;
 
-    Editor (Window& window, Camera& camera, Sky& sky, Maze& maze, 
-            bool& depthBuffer, float& exposure, float& gamma,
-            bool& fog, float& fog_distance, float& fog_falloff, glm::vec3& fog_color,
-            bool& blur, int& blurRadius,
-            bool& ambientOcclusion, bool& occlusionBuffer, int& occlusionRadius, float& occlusionThreshold, float& occlusionStrength
-            ):
-            window(window), camera(camera), sky(sky), maze(maze),
-            depthBuffer(depthBuffer), exposure(exposure), gamma(gamma),
-            fog(fog), fog_distance(fog_distance), fog_falloff(fog_falloff), fog_color(fog_color),
-            blur(blur), blurRadius(blurRadius),
-            ambientOcclusion(ambientOcclusion), occlusionBuffer(occlusionBuffer), occlusionRadius(occlusionRadius), occlusionThreshold(occlusionThreshold), occlusionStrength(occlusionStrength)
-
-            {
+    Editor (Window& window, Camera& camera, Sky& sky, Finalizer& finalizer, Maze& maze): 
+            window(window), camera(camera), sky(sky), finalizer(finalizer), maze(maze) {
 
         ImGui::CreateContext();
         ImGui_ImplGlfw_InitForOpenGL(window.GLFW_window, true);
@@ -147,28 +123,28 @@ struct Editor {
             }
 
         if (ImGui::CollapsingHeader("Post Shader")) {
-            ImGui::Checkbox("Depth Buffer", &depthBuffer);
-            ImGui::SliderFloat("Exposure", &exposure, 0.0f, 10.0f);
-            ImGui::SliderFloat("Gamma", &gamma, 0.0f, 10.0f);
+            ImGui::Checkbox("Depth Buffer", &finalizer.depthBuffer);
+            ImGui::SliderFloat("Exposure", &finalizer.exposure, 0.0f, 10.0f);
+            ImGui::SliderFloat("Gamma", &finalizer.gamma, 0.0f, 10.0f);
 
-            ImGui::Checkbox("Fog", &fog);
-            if (fog) { 
-                ImGui::SliderFloat("Distance", &fog_distance, 0.0f, 1.0f); 
-                ImGui::SliderFloat("Falloff", &fog_falloff, 0.0f, 1.0f);
-                ImGui::ColorEdit3("Color", glm::value_ptr(fog_color));
+            ImGui::Checkbox("Fog", &finalizer.fog);
+            if (finalizer.fog) { 
+                ImGui::SliderFloat("Distance", &finalizer.fog_distance, 0.0f, 1.0f); 
+                ImGui::SliderFloat("Falloff", &finalizer.fog_falloff, 0.0f, 1.0f);
+                ImGui::ColorEdit3("Color", glm::value_ptr(finalizer.fog_color));
                 }
                         
-            ImGui::Checkbox("Blur", &blur);
-            if (blur) { 
-                ImGui::SliderInt("Blur Radius", &blurRadius, 1, 10); 
+            ImGui::Checkbox("Blur", &finalizer.blur);
+            if (finalizer.blur) { 
+                ImGui::SliderInt("Blur Radius", &finalizer.blurRadius, 1, 10); 
                 }
 
-            ImGui::Checkbox("Ambient Occlusion", &ambientOcclusion);
-            if (ambientOcclusion) { 
-                ImGui::Checkbox("Occlusion Buffer", &occlusionBuffer);
-                ImGui::SliderInt("Radius", &occlusionRadius, 1, 10); 
-                ImGui::SliderFloat("Threshold", &occlusionThreshold, 0.0f, 1.0f);
-                ImGui::SliderFloat("Strength", &occlusionStrength, 0.0f, 100.0f);
+            ImGui::Checkbox("Ambient Occlusion", &finalizer.ambientOcclusion);
+            if (finalizer.ambientOcclusion) { 
+                ImGui::Checkbox("Occlusion Buffer", &finalizer.occlusionBuffer);
+                ImGui::SliderInt("Radius", &finalizer.occlusionRadius, 1, 10); 
+                ImGui::SliderFloat("Threshold", &finalizer.occlusionThreshold, 0.0f, 1.0f);
+                ImGui::SliderFloat("Strength", &finalizer.occlusionStrength, 0.0f, 100.0f);
                 }
             }
         
