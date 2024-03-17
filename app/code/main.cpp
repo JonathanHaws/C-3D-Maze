@@ -14,8 +14,8 @@ int main() {
     float sunZ = 0.1f;   
     glm::vec3 skyColor = glm::vec3(0.529f, 0.676f, 0.701f); 
     glm::vec3 objectColor = glm::vec3(1.000f, 1.000f, 1.000f);
-    glm::vec3 ambientColor = glm::vec3(0.251f, 0.316f, 0.324f);
-    glm::vec3 lightColor = glm::vec3(0.853f, 0.609f, 0.418f);
+    glm::vec3 ambientColor = glm::vec3(0.016f, 0.067f, 0.074f);
+    glm::vec3 lightColor = glm::vec3(1.000f, 0.847f, 0.775f);
     bool fog = true;
     float fog_distance = 0.9f;
     float fog_falloff = 0.15f;
@@ -45,7 +45,7 @@ int main() {
     Mesh feild("meshes/feild.obj");
     Mesh quad("meshes/quad.obj");
     Mesh sword("meshes/sword.obj");
-    Maze maze(128, 128, 3, 0.2, 5000.0, camera, false);
+    Maze maze(128, 128, 3, 0.5, 5000.0, camera, false);
     Editor editor(window, camera, maze, sunX, sunY, sunZ, skyColor, objectColor, ambientColor, lightColor, depthBuffer, exposure, gamma, fog, fog_distance, fog_falloff, fog_color, blur, blurRadius, ambientOcclusion, occlusionBuffer, occlusionRadius, occlusionThreshold, occlusionStrength);
 
     while (window.is_open()) {

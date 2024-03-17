@@ -143,21 +143,39 @@ void main() {
 // Fragment
 #version 330 core
 out vec4 FragColor;
+
 in vec2 TexCoordNew;
 in vec3 NormalNew;  
+
 uniform sampler2D bricksDiffuseTexture;
-uniform sampler2D bricksNormalTexture;
-uniform vec3 objectColor;    
+uniform sampler2D bricksNormalTexture; 
+
 uniform vec3 ambientColor;   
 uniform vec3 lightColor;     
 uniform vec3 lightDirection;
+
 void main() {
-    vec3 ambient = ambientColor * objectColor;
-    vec3 norm = normalize(NormalNew); // Use the normal vector passed from the vertex shader
-    vec3 lightDir = normalize(lightDirection);
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = lightColor * (diff * objectColor);
-    vec3 finalColor = (ambient + diffuse) * texture(bricksDiffuseTexture, TexCoordNew).rgb;
- 
+    vec2 brickSize = vec2(.2, .2);
+
+    vec3 diffuseColor = texture(bricksDiffuseTexture, TexCoordNew * brickSize).rgb;
+
+    // Normalize normal vector passed from vertex shader
+    vec3 norm = normalize(NormalNew);
+
+    // Sample normal texture to get perturbed normal
+    vec3 normalMap = texture(bricksNormalTexture, TexCoordNew * brickSize).rgb;
+
+    // Transform normal map values from [0, 1] range to [-1, 1]
+    vec3 perturbedNormal = normalize(normalMap * 2.0 - 1.0);
+
+    // Combine perturbed normal with vertex normal
+    vec3 finalNormal = normalize(perturbedNormal + norm);
+
+    // Compute diffuse lighting
+    float diffuseIntensity = max(dot(finalNormal, normalize(lightDirection)), 0.0);
+
+    // Final color with light color taken into account
+    vec3 finalColor = ambientColor + diffuseColor * diffuseIntensity * lightColor;
+
     FragColor = vec4(finalColor, 1.0);
     }
