@@ -3,19 +3,14 @@
 #include <sstream>
 #include "libs/glm/glm.hpp"
 #include "graphics/graphics.h"
+#include "sky.h"
 #include "maze.h"
-#include "editor.h"
 #include "audio/sound.h"
+#include "editor.h"
+//#include "post.h"
 
 int main() {
 
-    float sunX = 0.1f;
-    float sunY = 1.0f;
-    float sunZ = 0.1f;   
-    glm::vec3 skyColor = glm::vec3(0.529f, 0.676f, 0.701f); 
-    glm::vec3 objectColor = glm::vec3(1.000f, 1.000f, 1.000f);
-    glm::vec3 ambientColor = glm::vec3(0.016f, 0.067f, 0.074f);
-    glm::vec3 lightColor = glm::vec3(1.000f, 0.847f, 0.775f);
     bool fog = true;
     float fog_distance = 0.9f;
     float fog_falloff = 0.15f;
@@ -31,6 +26,8 @@ int main() {
     float exposure = 1.0f;
     float gamma = 1.0f;
 
+    //Post post;  
+    Sky sky(glm::vec3(0.1f, 1.0f, 0.1f), glm::vec3(0.529f, 0.676f, 0.701f), glm::vec3(1.0f), glm::vec3(0.016f, 0.067f, 0.074f), glm::vec3(1.000f, 0.847f, 0.775f));
     Audio audio;
     Camera camera(80.0f, 1920.0f / 1080.0f, 0.1f, 10000.0f); 
     camera.set_position(0, 30, -100);
@@ -46,7 +43,7 @@ int main() {
     Mesh quad("meshes/quad.obj");
     Mesh sword("meshes/sword.obj");
     Maze maze(128, 128, 3, 0.5, 5000.0, camera, false);
-    Editor editor(window, camera, maze, sunX, sunY, sunZ, skyColor, objectColor, ambientColor, lightColor, depthBuffer, exposure, gamma, fog, fog_distance, fog_falloff, fog_color, blur, blurRadius, ambientOcclusion, occlusionBuffer, occlusionRadius, occlusionThreshold, occlusionStrength);
+    Editor editor(window, camera, sky, maze, depthBuffer, exposure, gamma, fog, fog_distance, fog_falloff, fog_color, blur, blurRadius, ambientOcclusion, occlusionBuffer, occlusionRadius, occlusionThreshold, occlusionStrength);
 
     while (window.is_open()) {
 
@@ -98,19 +95,15 @@ int main() {
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
-        glClearColor(skyColor.r, skyColor.g, skyColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        sky.draw();
 
         framebuffer.bind();
-        glClearColor(skyColor.r, skyColor.g, skyColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        sky.draw();
 
         regularShader.bind();
-        regularShader.setVec3("lightDirection", sunX, sunY, sunZ);
-        regularShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
-        regularShader.setVec3("objectColor", objectColor.x, objectColor.y, objectColor.z);
-        regularShader.setVec3("ambientColor", ambientColor.x, ambientColor.y, ambientColor.z);
-        regularShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
+        sky.bind(&regularShader); 
         regularShader.setMat4("Model",  glm::mat4(1.0f));
         regularShader.setMat4("View", camera.viewMatrix());
         regularShader.setMat4("Projection", camera.projectionMatrix());   
@@ -118,10 +111,7 @@ int main() {
         feild.draw();
 
         mazeShader.bind();
-        mazeShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
-        mazeShader.setVec3("lightDirection", sunX, sunY, sunZ);
-        mazeShader.setVec3("objectColor", objectColor.x, objectColor.y, objectColor.z);
-        mazeShader.setVec3("ambientColor", ambientColor.x, ambientColor.y, ambientColor.z);
+        sky.bind(&mazeShader);
         mazeShader.setMat4("Model",  glm::mat4(1.0f));
         mazeShader.setMat4("View", camera.viewMatrix());
         mazeShader.setMat4("Projection", camera.projectionMatrix());

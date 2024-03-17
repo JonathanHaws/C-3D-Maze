@@ -2,23 +2,14 @@
 #include <libs/imgui/imgui.h>
 #include <libs/imgui/imgui_impl_glfw.h>
 #include <libs/imgui/imgui_impl_opengl3.h>
-#include <libs/glm/glm.hpp>
-#include <graphics/graphics.h>
-#include <maze.h>
 
 struct Editor {
 
     Window& window;
     Camera& camera; 
+    Sky& sky;
     Maze& maze;
     bool drawMazeTexture = false;
-    float& sunX;
-    float& sunY;
-    float& sunZ;
-    glm::vec3& skyColor;
-    glm::vec3& objectColor;
-    glm::vec3& ambientColor;
-    glm::vec3& lightColor;
     bool& depthBuffer;
     float& exposure;
     float& gamma;
@@ -34,19 +25,13 @@ struct Editor {
     float& occlusionThreshold;
     float& occlusionStrength;
 
-    Editor (Window& window, 
-            Camera& camera, 
-            Maze& maze, 
-            float& sunX, float& sunY, float& sunZ, 
-            glm::vec3& skyColor, glm::vec3& objectColor, glm::vec3& ambientColor, glm::vec3& lightColor, 
+    Editor (Window& window, Camera& camera, Sky& sky, Maze& maze, 
             bool& depthBuffer, float& exposure, float& gamma,
             bool& fog, float& fog_distance, float& fog_falloff, glm::vec3& fog_color,
             bool& blur, int& blurRadius,
             bool& ambientOcclusion, bool& occlusionBuffer, int& occlusionRadius, float& occlusionThreshold, float& occlusionStrength
             ):
-            window(window), camera(camera), maze(maze), 
-            sunX(sunX), sunY(sunY), sunZ(sunZ), 
-            skyColor(skyColor), objectColor(objectColor), ambientColor(ambientColor), lightColor(lightColor),
+            window(window), camera(camera), sky(sky), maze(maze),
             depthBuffer(depthBuffer), exposure(exposure), gamma(gamma),
             fog(fog), fog_distance(fog_distance), fog_falloff(fog_falloff), fog_color(fog_color),
             blur(blur), blurRadius(blurRadius),
@@ -150,15 +135,15 @@ struct Editor {
                 }
             }
 
-        if (ImGui::CollapsingHeader("Lighting")) {
-            ImGui::SliderFloat("Sun X", &sunX, -10.0f, 10.0f); 
-            ImGui::SliderFloat("Sun Y", &sunY, 1.0f, 10.0f);
-            ImGui::SliderFloat("Sun Z", &sunZ, -10.0f, 10.0f);
+        if (ImGui::CollapsingHeader("Sky")) {
+            ImGui::SliderFloat("Sun X", &sky.sun.x, -10.0f, 10.0f); 
+            ImGui::SliderFloat("Sun Y", &sky.sun.y, 1.0f, 10.0f);
+            ImGui::SliderFloat("Sun Z", &sky.sun.z, -10.0f, 10.0f);
 
-            ImGui::ColorEdit3("Sky Color", glm::value_ptr(skyColor));
-            ImGui::ColorEdit3("Object Color", glm::value_ptr(objectColor));
-            ImGui::ColorEdit3("Ambient Color", glm::value_ptr(ambientColor));
-            ImGui::ColorEdit3("Light Color", glm::value_ptr(lightColor));
+            ImGui::ColorEdit3("Sky Color", glm::value_ptr(sky.skyColor));
+            ImGui::ColorEdit3("Object Color", glm::value_ptr(sky.objectColor));
+            ImGui::ColorEdit3("Ambient Color", glm::value_ptr(sky.ambientColor));
+            ImGui::ColorEdit3("Light Color", glm::value_ptr(sky.lightColor));
             }
 
         if (ImGui::CollapsingHeader("Post Shader")) {
