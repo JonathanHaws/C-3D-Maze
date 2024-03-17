@@ -174,4 +174,6 @@ struct Window {
         mouse_previous_y = y;
     }
 
-};
+    };
+
+#include "opengl/graphics.h"

@@ -2,7 +2,8 @@
 #include <iostream>
 #include <sstream>
 #include "libs/glm/glm.hpp"
-#include "graphics/graphics.h"
+#include "graphics/window.h"
+#include "camera.h"
 #include "sky.h"
 #include "maze.h"
 #include "audio/sound.h"
@@ -20,12 +21,12 @@ int main() {
     Shader regularShader("shaders/regular.glsl");
     Shader postShader("shaders/post.glsl");
     Shader mazeShader("shaders/maze.glsl");
+    Shader shader2d("shaders/2d.glsl");
     Texture grass("textures/grass.jpg");  
     Mesh wall("meshes/cube.obj");
     Mesh feild("meshes/feild.obj");
-    Mesh quad("meshes/quad.obj");
-    Mesh sword("meshes/sword.obj");
-    Maze maze(128, 128, 3, 0.5, 5000.0, camera, false);
+
+    Maze maze(128, 128, 3, 0.5, 5000.0, camera, false, &shader2d, &mazeShader);
     Framebuffer framebuffer(1920, 1080);
     Finalizer finalizer;  
     Editor editor(window, camera, sky, finalizer, maze); 
@@ -81,32 +82,21 @@ int main() {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        sky.draw();
-
+        
         framebuffer.bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         sky.draw();
-
         regularShader.bind();
         sky.bind(&regularShader); 
-        regularShader.setMat4("Model",  glm::mat4(1.0f));
-        regularShader.setMat4("View", camera.viewMatrix());
-        regularShader.setMat4("Projection", camera.projectionMatrix());   
+        camera.bind(&regularShader);
         grass.bind(0); 
         feild.draw();
-
         mazeShader.bind();
         sky.bind(&mazeShader);
-        mazeShader.setMat4("Model",  glm::mat4(1.0f));
-        mazeShader.setMat4("View", camera.viewMatrix());
-        mazeShader.setMat4("Projection", camera.projectionMatrix());
+        camera.bind(&mazeShader);
         maze.draw();
-
         framebuffer.unbind();
-
         finalizer.draw(&postShader, &framebuffer);
-        quad.draw();
-
         editor.edit();
         window.swap_buffers();
 

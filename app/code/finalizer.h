@@ -17,7 +17,7 @@ struct Finalizer {
     float exposure = 1.0f;
     float gamma = 1.0f;
     //Framebuffer buffer = Framebuffer(1920, 1080);
-    //Mesh quad = Mesh("meshes/quad.obj");
+    Mesh quad = Mesh("meshes/quad.obj");
 
     void draw(Shader* shader, Framebuffer* buffer) {
 
@@ -44,7 +44,7 @@ struct Finalizer {
         glBindTexture(GL_TEXTURE_2D, buffer->depth_texture);
         glUniform1i(glGetUniformLocation(shader->id, "depthTexture"), 1);
 
-        //quad.draw();
+        quad.draw();
 
         }
 

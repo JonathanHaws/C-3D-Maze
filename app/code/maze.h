@@ -6,40 +6,29 @@
 
 struct Maze {
     
-    int width = 0; 
-    int depth = 0; 
+    int width = 20; // Keep Default bigger then 3 cause it breaks?
+    int depth = 20; 
     float height = 0.0f;
     float breadth = 1.0f;
     float timer = 0.0f; 
     float speed = 0.0f;
     bool loop = false; // If true, the maze will reset when it is complete
-    
+
     Camera& camera;
     std::stack<std::pair<int, int>> cells_to_expand; 
     std::vector<std::vector<char>> corridors;
-    Mesh wall; 
-    Texture mazeTexture;
-    Texture bricksDiffuseTexture;
-    Texture bricksNormalTexture;
-    GLuint instanceBuffer = 0; 
-    Shader shader2d;
+    
+    Mesh wall = Mesh("meshes/quad.obj"); 
+    Texture mazeTexture = Texture(width, depth);
+    Texture bricksDiffuseTexture = Texture("textures/bricks/diffuse.jpg");
+    Texture bricksNormalTexture = Texture("textures/bricks/normal.jpg");
+    Shader* shader2d;
+    Shader* mazeShader;
+
     Mesh quad;
 
-    Maze(int width, int depth, float height, float breadth, float speed, Camera& camera, bool loop = false):
-        width(width),
-        depth(depth),
-        height(height),
-        breadth(breadth),
-        speed(speed),
-        mazeTexture(width, depth),
-        bricksDiffuseTexture("textures/bricks/diffuse.jpg"),
-        bricksNormalTexture{"textures/bricks/normal.jpg"},
-        camera(camera),
-        loop(loop), 
-        wall("meshes/quad.obj"),
-        shader2d("shaders/2d.glsl"),
-        quad("meshes/quad.obj")
-        {
+    Maze(int width, int depth, float height, float breadth, float speed, Camera& camera, bool loop = false, Shader* shader2d = nullptr, Shader* mazeShader = nullptr) :
+        width(width), depth(depth), height(height), breadth(breadth), speed(speed), camera(camera), loop(loop), shader2d(shader2d), mazeShader(mazeShader) {
         corridors.resize(width, std::vector<char>(depth, '#'));
         updateTextureFromCorridors();
         }
@@ -141,16 +130,16 @@ struct Maze {
         }      
 
     void drawTexture() {
-        shader2d.bind();
+        shader2d->bind();
         mazeTexture.bind(0);
         glm::mat4 stopclipmodel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -0.5f));
-        shader2d.setMat4("Model", stopclipmodel);
-        shader2d.setMat4("View", glm::mat4(1.0f));
-        shader2d.setMat4("Projection", camera.projectionMatrix(false));
-        glUniform1i(glGetUniformLocation(shader2d.id, "texture_diffuse1"), 0);
+        shader2d->setMat4("Model", stopclipmodel);
+        shader2d->setMat4("View", glm::mat4(1.0f));
+        shader2d->setMat4("Projection", camera.projectionMatrix(false));
+        glUniform1i(glGetUniformLocation(shader2d->id, "texture_diffuse1"), 0);
         quad.draw();
-        shader2d.setMat4("Projection", camera.projectionMatrix(true));
-        shader2d.unbind();
+        shader2d->setMat4("Projection", camera.projectionMatrix(true));
+        shader2d->unbind();
         }
 
     void draw() {
