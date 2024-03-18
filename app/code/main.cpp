@@ -1,7 +1,8 @@
 
 #include <iostream>
 #include <sstream>
-#include "libs/glm/glm.hpp"
+#include <libs/glm/glm.hpp>
+#include <libs/glm/gtc/type_ptr.hpp>
 #include "graphics/window.h"
 #include "camera.h"
 #include "sky.h"
@@ -26,7 +27,7 @@ int main() {
     Mesh wall("meshes/cube.obj");
     Mesh feild("meshes/feild.obj");
 
-    Maze maze(128, 128, 3, 0.5, 5000.0, camera, false, &shader2d, &mazeShader);
+    Maze maze(128, 128, 3, 1.0, 5000.0, camera, false, &shader2d, &mazeShader);
     Framebuffer framebuffer(1920, 1080);
     Finalizer finalizer;  
     Editor editor(window, camera, sky, finalizer, maze); 
@@ -39,14 +40,35 @@ int main() {
 
             maze.tick(window.delta_time);
         
-            // Camera movement
-            float camera_speed = 1 + (window.input(GLFW_KEY_LEFT_SHIFT) * 2); // If left shift is pressed, double the speed
-            float forward = (window.input(GLFW_KEY_W) - window.input(GLFW_KEY_S)) * 12 * camera_speed * window.delta_time;
-            float right = (window.input(GLFW_KEY_D) - window.input(GLFW_KEY_A)) * 12 * camera_speed * window.delta_time;
-            glm::vec3 forwardVector = glm::normalize(camera.target - camera.position);
-            glm::vec3 rightVector = glm::normalize(glm::cross(forwardVector, glm::vec3(0, 1, 0))); 
-            camera.position += forward * forwardVector + right * rightVector;
-            camera.target += forward * forwardVector + right * rightVector;
+            glm::vec3 old_target = camera.target;
+            glm::vec3 old_position = camera.position;
+
+            camera.fly( // Foward And Rightward
+                (window.input(GLFW_KEY_W) - window.input(GLFW_KEY_S)) * window.delta_time * (1 +(window.input(GLFW_KEY_LEFT_SHIFT) * 2)), 
+                (window.input(GLFW_KEY_D) - window.input(GLFW_KEY_A)) * window.delta_time * (1 +(window.input(GLFW_KEY_LEFT_SHIFT) * 2)) 
+                );
+
+            if (camera.collide) {
+            
+                if (camera.position.y < 0.2) { // Keep the camera above the ground
+                    camera.target.y = old_target.y;
+                    camera.position.y = 0.2; 
+                    } 
+
+                if (maze.colliding(glm::vec3(camera.position.x, old_position.y, old_position.z))) { // Collide Maze X
+                    camera.position.x = old_position.x; 
+                    camera.target.x = old_target.x;
+                    }
+                if (maze.colliding(glm::vec3(old_position.x, camera.position.y, old_position.z))) { // Collide Maze Y
+                    camera.position.y = old_position.y; 
+                    camera.target.y = old_target.y;
+                    }
+                if (maze.colliding(glm::vec3(old_position.x, old_position.y, camera.position.z))) { // Collide Maze Z
+                    camera.position.z = old_position.z; 
+                    camera.target.z = old_target.z;
+                    }
+                
+                }
 
             // Toggle cursor
             if (window.input_released(GLFW_KEY_ESCAPE)) {
@@ -59,22 +81,7 @@ int main() {
             
             // Look around
             if (glfwGetInputMode(window.GLFW_window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) { // Look around only if the cursor is disabled
-
-                float cameraYaw = camera.yaw();
-                float cameraPitch = camera.pitch();
-
-                float sensitivity = 0.1f;
-                cameraYaw += window.mouse_delta_x * sensitivity;
-                cameraPitch += -window.mouse_delta_y * sensitivity;
-                
-                if (cameraPitch > 89.0f) cameraPitch = 89.0f; // Clamp the pitch to prevent the camera from flipping
-                if (cameraPitch < -89.0f) cameraPitch = -89.0f;
-                glm::vec3 front;
-                front.x = cos(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
-                front.y = sin(glm::radians(cameraPitch));
-                front.z = sin(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
-                camera.target = camera.position + glm::normalize(front);
-
+                camera.look(window.mouse_delta_x, window.mouse_delta_y);
                 }
                 
             #pragma endregion

@@ -1,6 +1,4 @@
 #pragma once
-#include <libs/glm/glm.hpp>
-#include <libs/glm/gtc/type_ptr.hpp>
 
 struct Camera {
     
@@ -12,6 +10,12 @@ struct Camera {
     float aspectRatio = 1280.0f / 720.0f;
     float nearPlane = 0.1f;
     float farPlane = 100000.0f;
+
+    float sensitivityX = 0.1f;
+    float sensitivityY = 0.1f;
+    
+    float speed = 12.0f;
+    bool collide = true;
 
     void bind(Shader* shader) {
         shader->setMat4("Model",  glm::mat4(1.0f));
@@ -28,6 +32,29 @@ struct Camera {
         if (yaw < 0) { yaw += 2 * glm::pi<float>(); }
         return glm::degrees(yaw);
         }
+    
+    void fly(float forward, float right) {
+        glm::vec3 forwardVector = glm::normalize(target - position);
+        glm::vec3 rightVector = glm::normalize(glm::cross(forwardVector, glm::vec3(0, 1, 0))); 
+        position += ((forward * speed) * forwardVector) + ((right * speed) * rightVector);
+        target   += ((forward * speed) * forwardVector) + ((right * speed) * rightVector);
+        }
+
+    void look(float x, float y) {
+        float cameraYaw = yaw();
+        float cameraPitch = pitch();
+        cameraYaw += x * sensitivityX;
+        cameraPitch += y * -sensitivityY;
+        if (cameraPitch > 89.0f) cameraPitch = 89.0f; // Clamp the pitch to prevent the camera from flipping
+        if (cameraPitch < -89.0f) cameraPitch = -89.0f;
+        glm::vec3 front;
+        front.x = cos(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
+        front.y = sin(glm::radians(cameraPitch));
+        front.z = sin(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
+        target = position + glm::normalize(front);
+        }
+
+    
     
     glm::mat4 viewMatrix() {
         return glm::lookAt(position, target, up);

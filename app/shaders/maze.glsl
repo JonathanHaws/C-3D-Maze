@@ -39,7 +39,7 @@ void emit(vec3 vertex, vec2 texCoord, vec3 normal) {
     }
 
 void tri(float ax, float ay, float az, float bx, float by, float bz, float cx, float cy, float cz) {
-    float scale = 2.0;
+    float scale = 1.0;
     float xoffset = float(mazeWidth) / 2.0;
     float zoffset = float(mazeDepth) / 2.0;
     ax -= xoffset; az -= zoffset;

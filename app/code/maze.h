@@ -32,6 +32,26 @@ struct Maze {
         corridors.resize(width, std::vector<char>(depth, '#'));
         updateTextureFromCorridors();
         }
+    char getValue(int x, int y) {
+        if (x < 0 || y < 0 || x >= width || y >= depth) { return 'O'; } // Out of bounds 'O
+        return corridors[x][y];;
+        }
+    bool colliding(glm::vec3 position, float radius = 0.2) {
+        float x = position.x + (width / 2);
+        float y = position.y;
+        float z = position.z + (depth / 2);
+        
+        if (x < 0 - radius || x > width + radius) { return false; }
+        if (z < 0 - radius || z > depth + radius) { return false; }
+        if (y < 0 - radius || y > height + radius) { return false; }
+        
+        if (getValue(x + radius, z + radius) == '#') { return true; }
+        if (getValue(x - radius, z - radius) == '#') { return true; }
+        if (getValue(x + radius, z - radius) == '#') { return true; }
+        if (getValue(x - radius, z + radius) == '#') { return true; }
+
+        return false;
+        }
  
     void updateTextureFromCorridors(int xoffset = 0, int yoffset = 0, int width = -1, int depth = -1) {
         std::vector<unsigned char> textureData;
