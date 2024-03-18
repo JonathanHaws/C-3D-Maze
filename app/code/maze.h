@@ -13,6 +13,8 @@ struct Maze {
     float timer = 0.0f; 
     float speed = 0.0f;
     bool loop = false; // If true, the maze will reset when it is complete
+    float scale = 1.0f;
+    float brickSize = 0.5f;
 
     Camera& camera;
     std::stack<std::pair<int, int>> cells_to_expand; 
@@ -37,13 +39,13 @@ struct Maze {
         return corridors[x][y];;
         }
     bool colliding(glm::vec3 position, float radius = 0.2) {
-        float x = position.x + (width / 2);
+        float x = position.x / scale + (width / 2);
         float y = position.y;
-        float z = position.z + (depth / 2);
+        float z = position.z / scale + (depth / 2);
         
-        if (x < 0 - radius || x > width + radius) { return false; }
-        if (z < 0 - radius || z > depth + radius) { return false; }
-        if (y < 0 - radius || y > height + radius) { return false; }
+        if (x < 0 - radius || x > (width * scale) + radius) { return false; }
+        if (z < 0 - radius || z > (depth * scale) + radius) { return false; }
+        if (y < 0 - radius || y > (height * scale) + radius) { return false; }
         
         if (getValue(x + radius, z + radius) == '#') { return true; }
         if (getValue(x - radius, z - radius) == '#') { return true; }
@@ -171,6 +173,8 @@ struct Maze {
         glUniform1i(glGetUniformLocation(currentProgram, "mazeDepth"), depth);
         glUniform1f(glGetUniformLocation(currentProgram, "mazeHeight"), height);
         glUniform1f(glGetUniformLocation(currentProgram, "mazeBreadth"), breadth);
+        glUniform1f(glGetUniformLocation(currentProgram, "mazeScale"), scale);
+        glUniform1f(glGetUniformLocation(currentProgram, "brickSize"), brickSize);
 
         mazeTexture.bind(0);
         bricksDiffuseTexture.bind(1);

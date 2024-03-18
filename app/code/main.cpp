@@ -39,36 +39,58 @@ int main() {
             window.poll_events();
 
             maze.tick(window.delta_time);
-        
-            glm::vec3 old_target = camera.target;
-            glm::vec3 old_position = camera.position;
-
-            camera.fly( // Foward And Rightward
-                (window.input(GLFW_KEY_W) - window.input(GLFW_KEY_S)) * window.delta_time * (1 +(window.input(GLFW_KEY_LEFT_SHIFT) * 2)), 
-                (window.input(GLFW_KEY_D) - window.input(GLFW_KEY_A)) * window.delta_time * (1 +(window.input(GLFW_KEY_LEFT_SHIFT) * 2)) 
-                );
 
             if (camera.collide) {
-            
-                if (camera.position.y < 0.2) { // Keep the camera above the ground
-                    camera.target.y = old_target.y;
-                    camera.position.y = 0.2; 
-                    } 
+                
+                glm::vec3 old_target = camera.target;
+                glm::vec3 old_position = camera.position;
 
+                camera.walk( // Foward And Rightward
+                    (window.input(GLFW_KEY_W) - window.input(GLFW_KEY_S)) * window.delta_time * (1 +(window.input(GLFW_KEY_LEFT_SHIFT) * 2)), 
+                    (window.input(GLFW_KEY_D) - window.input(GLFW_KEY_A)) * window.delta_time * (1 +(window.input(GLFW_KEY_LEFT_SHIFT) * 2)) 
+                    );
+
+                // if (camera.falling == 0) { // Jump
+                //     if (window.input(GLFW_KEY_SPACE)) {
+                //         camera.y_velocity = .1; // Jump Height
+                //         camera.falling = 1;
+                //         }
+                //     }
+
+                camera.fall(window.delta_time); // Fall (Gravity)
+
+                if (camera.position.y < camera.headheight) { // Keep the camera above the ground
+                    camera.position.y = camera.headheight;
+                    camera.falling = 0;
+                    camera.y_velocity = 0;
+                    } 
+                
                 if (maze.colliding(glm::vec3(camera.position.x, old_position.y, old_position.z))) { // Collide Maze X
+                    
                     camera.position.x = old_position.x; 
-                    camera.target.x = old_target.x;
                     }
-                if (maze.colliding(glm::vec3(old_position.x, camera.position.y, old_position.z))) { // Collide Maze Y
-                    camera.position.y = old_position.y; 
-                    camera.target.y = old_target.y;
+
+                if (maze.colliding(glm::vec3(old_position.x, camera.position.y - camera.headheight, old_position.z))) { // Collide Maze Y
+                    camera.position.y = maze.height + camera.headheight;
+                    camera.falling = 0;
+                    //camera.y_velocity = 0;
                     }
+
                 if (maze.colliding(glm::vec3(old_position.x, old_position.y, camera.position.z))) { // Collide Maze Z
                     camera.position.z = old_position.z; 
-                    camera.target.z = old_target.z;
                     }
                 
+                camera.setTargetToSameRelativePosition(old_position, old_target);
+
+               
+            } else { 
+                camera.fly( // Foward And Rightward
+                    (window.input(GLFW_KEY_W) - window.input(GLFW_KEY_S)) * window.delta_time * (1 +(window.input(GLFW_KEY_LEFT_SHIFT) * 2)), 
+                    (window.input(GLFW_KEY_D) - window.input(GLFW_KEY_A)) * window.delta_time * (1 +(window.input(GLFW_KEY_LEFT_SHIFT) * 2)) 
+                    );
                 }
+
+            
 
             // Toggle cursor
             if (window.input_released(GLFW_KEY_ESCAPE)) {

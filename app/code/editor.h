@@ -84,6 +84,8 @@ struct Editor {
             ImGui::SliderFloat("Far", &camera.farPlane, 0.1f, 10000.0f);
             ImGui::SliderFloat("Speed", &camera.speed, 1.0f, 20.0f);
             ImGui::Checkbox("Collide", &camera.collide);
+            ImGui::SliderFloat("Head Height", &camera.headheight, 0.1f, 10.0f);
+            ImGui::SliderFloat("Gravity", &camera.gravity, -10.0f, 0.0f);
             }
 
         if (ImGui::CollapsingHeader("Maze")) {
@@ -91,6 +93,8 @@ struct Editor {
             ImGui::SliderFloat("Breadth", &maze.breadth, 0.0, 1.0);
             ImGui::SliderInt("Width", &maze.width, 1, 2048);
             ImGui::SliderInt("Depth", &maze.depth, 1, 2048);
+            ImGui::SliderFloat("Scale", &maze.scale, 0.1f, 10.0f);
+            ImGui::SliderFloat("Brick Size", &maze.brickSize, 0.1f, 10.0f);
             ImGui::SliderFloat("Expansion Speed", &maze.speed, 0.0f, 5000.0f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
             if (ImGui::Button("Reset")) {
                 maze.reset();

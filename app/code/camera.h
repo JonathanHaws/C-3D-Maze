@@ -16,6 +16,10 @@ struct Camera {
     
     float speed = 12.0f;
     bool collide = true;
+    float y_velocity = 0.0f;
+    float gravity = -0.1f;
+    float falling = 0.0f;
+    float headheight = 1.2f;
 
     void bind(Shader* shader) {
         shader->setMat4("Model",  glm::mat4(1.0f));
@@ -40,6 +44,18 @@ struct Camera {
         target   += ((forward * speed) * forwardVector) + ((right * speed) * rightVector);
         }
 
+    void walk(float forward, float right) {
+        glm::vec3 forwardVector = glm::normalize(glm::vec3(target.x - position.x, 0.0f, target.z - position.z));
+        glm::vec3 rightVector = glm::normalize(glm::cross(forwardVector, glm::vec3(0, 1, 0))); 
+        position += ((forward * speed) * forwardVector) + ((right * speed) * rightVector);
+        target   += ((forward * speed) * forwardVector) + ((right * speed) * rightVector);
+        }
+
+    void setTargetToSameRelativePosition(glm::vec3 old_position, glm::vec3 old_target) {
+        glm::vec3 diff = old_target - old_position;
+        target = position + diff;
+        }
+
     void look(float x, float y) {
         float cameraYaw = yaw();
         float cameraPitch = pitch();
@@ -54,8 +70,13 @@ struct Camera {
         target = position + glm::normalize(front);
         }
 
-    
-    
+    void fall(float deltaTime) {
+        y_velocity += gravity * deltaTime;
+        position.y += y_velocity;
+        target.y += y_velocity;
+        falling += deltaTime;
+        }
+ 
     glm::mat4 viewMatrix() {
         return glm::lookAt(position, target, up);
         }

@@ -23,6 +23,7 @@ uniform int mazeWidth;
 uniform int mazeDepth;
 uniform float mazeHeight;
 uniform float mazeBreadth;
+uniform float mazeScale;
 uniform sampler2D mazeTexture;
 uniform mat4 Model;
 uniform mat4 View;        
@@ -39,7 +40,7 @@ void emit(vec3 vertex, vec2 texCoord, vec3 normal) {
     }
 
 void tri(float ax, float ay, float az, float bx, float by, float bz, float cx, float cy, float cz) {
-    float scale = 1.0;
+    float scale = mazeScale;
     float xoffset = float(mazeWidth) / 2.0;
     float zoffset = float(mazeDepth) / 2.0;
     ax -= xoffset; az -= zoffset;
@@ -121,6 +122,7 @@ void main() {
         wall(x+ (1 - mazeBreadth), z+ (1 - mazeBreadth), x + (1 - mazeBreadth), z+1);
         wall(x+ (1 - mazeBreadth), z+ (1 - mazeBreadth), x + 1, z +(1 - mazeBreadth));
         wall(x+ 1, z+(1 - mazeBreadth), x+1, z+1);
+        wall(x+ (1 - mazeBreadth), z+1, x+1, z+1);
         roof(x+ (1 - mazeBreadth), z+ (1 - mazeBreadth), x+1, z+1);
         return;
         }
@@ -153,9 +155,10 @@ uniform sampler2D bricksNormalTexture;
 uniform vec3 ambientColor;   
 uniform vec3 lightColor;     
 uniform vec3 lightDirection;
+uniform float brickSize;
 
 void main() {
-    vec2 brickSize = vec2(.2, .2);
+
 
     vec3 diffuseColor = texture(bricksDiffuseTexture, TexCoordNew * brickSize).rgb;
 
