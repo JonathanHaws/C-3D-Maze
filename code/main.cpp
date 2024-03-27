@@ -17,16 +17,18 @@ Audio audio;
 
 int main() {
 
-    Sound ambient("sounds/ambient.wav");
-    //ambient.loop = true;
-    // Sound root = audio.load(root(440));
-    // root.loop = true;
-    // Sound third = audio.load(440 * 5 / 4);
-    // int.loop = audio.load(true);
-    // Sound fifth(440 * 3 / 2);
-    // fifth.loop = true;
+    int ambient = audio.load("sounds/ambient.wav");
+    audio.sounds[ambient]->loop = true;
+    // int root = audio.load(440);
+    // audio.sounds[root]->loop = true;
 
-    audio.play(&ambient);
+    // int third = audio.load(440 * 5 / 4);
+    // audio.sounds[third]->loop = true;
+
+    // int fifth = audio.load(440 * 3 / 2);
+    // audio.sounds[fifth]->loop = true;
+
+    audio.play(ambient);
     // audio.play(root);
     // audio.play(third);
     // audio.play(fifth);

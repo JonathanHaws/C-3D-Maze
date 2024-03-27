@@ -10,12 +10,23 @@
 struct Sound {
 
     const char* path;
-    std::vector<BYTE> wave;
     int progress = 0;
     bool loop = false;
 
-    void printData() {
+    std::vector<BYTE> wave;
+    int sample_rate = 44100;
+    int channels = 2;
+    int bits_per_sample = 16;
+
+    void print_data() {
         for (int i = 0; i < wave.size(); i++) { printf("%d ", wave[i]); }
+    }
+
+    void print_metadata() {
+        std::cout << "Sample rate: " << sample_rate << std::endl;
+        std::cout << "Channels: " << channels << std::endl;
+        std::cout << "Bits per sample: " << bits_per_sample << std::endl;
+        std::cout << "Size: " << wave.size() << std::endl;
     }
 
     Sound(int frequency = 440) {
@@ -45,21 +56,49 @@ struct Sound {
     void load_wave_file(const char* path) {
         std::ifstream file(path, std::ios::binary);
         if(file) {
-            wave.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-            //printf("Successfully read audio file: %s\n", path);
-        } else {
-            //printf("Error opening audio file: %s\n", path);
-        }
-        progress = wave.size();
-    }
+            // Read WAV header
+            char header[44]; // Read the first 44 bytes initially
+            file.read(header, 44);
 
+            // Check if it's a WAV file
+            if (header[0] != 'R' || header[1] != 'I' || header[2] != 'F' || header[3] != 'F' ||
+                header[8] != 'W' || header[9] != 'A' || header[10] != 'V' || header[11] != 'E') {
+                std::cerr << "Not a valid WAV file: " << path << std::endl;
+                return;
+            }
+
+            // Extract sample rate, number of channels, and bits per sample from header
+            sample_rate = *reinterpret_cast<int*>(header + 24);
+            channels = *reinterpret_cast<short*>(header + 22);
+            bits_per_sample = *reinterpret_cast<short*>(header + 34);
+
+            // Move file pointer to the beginning of the audio data (skip initial header)
+            file.seekg(0, std::ios::end);
+            std::streampos fileSize = file.tellg();
+            file.seekg(0, std::ios::beg);
+
+            // Calculate the size of the audio data by subtracting header size from file size
+            int headerSize = 44; // Size of the initial header
+            int audioDataSize = static_cast<int>(fileSize) - headerSize;
+
+            // Read audio data
+            wave.clear();
+            wave.resize(audioDataSize);
+            file.read(reinterpret_cast<char*>(wave.data()), audioDataSize);
+
+            //print_metadata();
+        } else {
+            std::cerr << "Error opening audio file: " << path << std::endl;
+        }
+    }
 };
+
 
 struct Audio {
 
     int buffers_played = 0;
     int current_buffer = 0;
-    static const int number_of_buffers = 16;
+    static const int number_of_buffers = 8;
     int needed_buffers = number_of_buffers; 
     static const int buffer_samples = 2048;
     static const int buffer_size = buffer_samples * 2 * 16 / 8; // 64 samples, 2 channels, 16 bits per sample, 8 bits per byte
@@ -70,9 +109,22 @@ struct Audio {
     std::thread audioThread;
     std::vector<Sound*> sounds; // Vector to hold pointers to Sound objects
 
-    void play(Sound* sound) {
-        sound->progress = 0;
+    void play(int sound) {
+        sounds[sound]->progress = 0;
+    }
+
+    int load(const char* path) {
+        Sound* sound = new Sound(path);
         sounds.push_back(sound);
+        sounds[sounds.size() - 1]->progress = sounds[sounds.size() - 1]->wave.size();
+        return sounds.size() - 1;
+    }
+
+    int load(int frequency) {
+        Sound* sound = new Sound(frequency);
+        sounds.push_back(sound);
+        sounds[sounds.size() - 1]->progress = sounds[sounds.size() - 1]->wave.size();
+        return sounds.size() - 1;
     }
 
     Audio() {
@@ -98,6 +150,7 @@ struct Audio {
         
         if (audioThread.joinable()) { audioThread.join(); }
     }
+    
     
     static void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2) {
         if (uMsg != WOM_DONE) { return; }
@@ -128,13 +181,20 @@ struct Audio {
     }
 
     void mix() {
-        for (auto sound : sounds) {
-            for (int i = 0; i < buffer_size; i++) { // Add the sample from the current sound to the current buffer 
+
+        for (int i = 0; i < buffer_size; i++) { 
+            buffers[current_buffer][i] = 0; 
+            int contrinbuting_sounds = 0;
+            for (auto sound : sounds) {
                 if (sound->loop) { sound->progress %= sound->wave.size(); }
-                if (sound->progress < sound->wave.size()) { buffers[current_buffer][i] += sound->wave[sound->progress]; }
+                if (sound->progress >= sound->wave.size()) { continue; }
+                buffers[current_buffer][i] += sound->wave[sound->progress]; 
+                contrinbuting_sounds++;
                 sound->progress++;
             }
+            if (contrinbuting_sounds > 0) { buffers[current_buffer][i] /= contrinbuting_sounds;}
         }
+
     }
 
 };

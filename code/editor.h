@@ -7,7 +7,7 @@ struct Editor {
     Finalizer& finalizer;
     Maze& maze;
     bool drawMazeTexture = false;
-    Sound expand = Sound("sounds/expand.wav");
+    int expand = audio.load("sounds/expand.wav");
 
     Editor (Window& window, Camera& camera, Sky& sky, Finalizer& finalizer, Maze& maze): 
             window(window), camera(camera), sky(sky), finalizer(finalizer), maze(maze) {
@@ -97,7 +97,7 @@ struct Editor {
                 }
             ImGui::SameLine();
             if (ImGui::Button("Expand Once")) {
-                audio->play(&expand);
+                audio->play(expand);
                 maze.expand();
                 maze.timer = 0.0f; // Reset the timer for maze expansion
                 }
