@@ -7,7 +7,6 @@ set input_path=../
 set output_path=../
 set output_file=maze.exe
 
-if exist %output_file% ( del /F %output_file% )
 cd %input_path%
 set global_libs=-lopengl32 -lgdi32 -luser32 -lmsvcrt -lshell32 -DGLEW_STATIC -llibcmt -lole32 -lwinmm -mwindows
 set local_libs= libs/imgui/*.cpp -Ilibs/ -llibs/GLFW/glfw3 libs/info/windows/metadata.res

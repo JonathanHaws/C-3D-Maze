@@ -98,7 +98,7 @@ struct Audio {
 
     int buffers_played = 0;
     int current_buffer = 0;
-    static const int number_of_buffers = 8;
+    static const int number_of_buffers = 16;
     int needed_buffers = number_of_buffers; 
     static const int buffer_samples = 2048;
     static const int buffer_size = buffer_samples * 2 * 16 / 8; // 64 samples, 2 channels, 16 bits per sample, 8 bits per byte
@@ -181,20 +181,21 @@ struct Audio {
     }
 
     void mix() {
-
-        for (int i = 0; i < buffer_size; i++) { 
-            buffers[current_buffer][i] = 0; 
-            int contrinbuting_sounds = 0;
+        for (int i = 0; i < buffer_size; i++) {
+            float sample_sum = 0.0f;
+            int contributing_sounds = 0;
             for (auto sound : sounds) {
                 if (sound->loop) { sound->progress %= sound->wave.size(); }
                 if (sound->progress >= sound->wave.size()) { continue; }
-                buffers[current_buffer][i] += sound->wave[sound->progress]; 
-                contrinbuting_sounds++;
+                sample_sum += static_cast<float>(sound->wave[sound->progress]);
+                contributing_sounds++;
                 sound->progress++;
             }
-            if (contrinbuting_sounds > 0) { buffers[current_buffer][i] /= contrinbuting_sounds;}
+            if (contributing_sounds > 0) { sample_sum /= contributing_sounds; }
+            sample_sum = static_cast<BYTE>(sample_sum);
+            if (sample_sum < 0 || sample_sum > 255) { std::cout << "Sample sum out of range: " << sample_sum << std::endl;}
+            buffers[current_buffer][i] = sample_sum;
         }
-
     }
 
 };
